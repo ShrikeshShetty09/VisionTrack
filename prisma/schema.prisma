@@ -1,0 +1,394 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  TESTER
+  DEVELOPER
+}
+
+enum Environment {
+  DEV
+  PRODUCTION
+  LOCAL
+  TESTING
+}
+
+enum Priority {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum IssueStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  IN_REVIEW
+  FIXED
+  TESTING_IN_PROGRESS
+  TESTED
+  REGRESSION
+  RESOLVED
+  TEST_FAILED
+  REGRESSION_FAILED
+  REOPENED
+}
+
+enum TestResult {
+  PASS
+  FAIL
+}
+
+enum RegressionResult {
+  PASS
+  FAIL
+}
+
+enum NotificationType {
+  ISSUE_ASSIGNED
+  STATUS_CHANGED
+  ISSUE_FIXED
+  TESTING_REQUIRED
+  TEST_FAILED
+  REGRESSION_REQUIRED
+  REGRESSION_FAILED
+  ISSUE_REOPENED
+  DEADLINE_30_MIN
+  DEADLINE_10_MIN
+  DEADLINE_OVERDUE
+  COMMENT_ADDED
+  ADMIN_ALERT
+}
+
+enum DeadlineReminderType {
+  REMINDER_30_MIN
+  REMINDER_10_MIN
+  OVERDUE
+}
+
+model User {
+  id                    String                 @id @default(uuid())
+  name                  String
+  email                 String                 @unique
+  passwordHash          String
+  role                  Role                   @default(DEVELOPER)
+  profileImage          String?
+  isActive              Boolean                @default(true)
+  lastLoginAt           DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  // Relationships
+  createdIssues         Issue[]                @relation("IssueCreatedBy")
+  assignedIssues        Issue[]                @relation("IssueAssignedDeveloper")
+  assignedRecords       IssueAssignment[]      @relation("AssignmentDeveloper")
+  givenAssignments      IssueAssignment[]      @relation("AssignmentBy")
+  statusChanges         IssueStatusHistory[]   @relation("StatusChangedBy")
+  resolutions           IssueResolution[]      @relation("ResolutionDeveloper")
+  testingRecords        TestingRecord[]        @relation("TestedBy")
+  regressionRecords     RegressionRecord[]     @relation("RegressionBy")
+  comments              IssueComment[]         @relation("CommentAuthor")
+  attachments           IssueAttachment[]      @relation("AttachmentUploadedBy")
+  notifications         Notification[]
+  pushSubscriptions     PushSubscription[]
+  notificationPreferences NotificationPreference?
+  auditLogs             AuditLog[]
+
+  @@index([role])
+  @@index([isActive])
+}
+
+model Software {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  code        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  modules     Module[]
+  issues      Issue[]
+}
+
+model Module {
+  id          String    @id @default(uuid())
+  softwareId  String
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  software    Software  @relation(fields: [softwareId], references: [id], onDelete: Cascade)
+  issues      Issue[]
+
+  @@unique([softwareId, name])
+  @@index([softwareId])
+}
+
+model Issue {
+  id                  String               @id @default(uuid())
+  issueCode           String               @unique // e.g. VT-000101
+  title               String
+  description         String
+  softwareId          String
+  moduleId            String?
+  environment         Environment          @default(TESTING)
+  jobUrl              String?
+  priority            Priority             @default(MEDIUM)
+  status              IssueStatus          @default(NEW)
+  
+  createdById         String
+  assignedDeveloperId String?
+  
+  deadlineDate        DateTime?
+  deadlineTime        String?              // e.g. "18:30"
+  deadlineTimestamp   DateTime?            // Combined UTC timestamp
+  isOverdue           Boolean              @default(false)
+  
+  reopenCount         Int                  @default(0)
+  deletedAt           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  // Relationships
+  software            Software             @relation(fields: [softwareId], references: [id])
+  module              Module?              @relation(fields: [moduleId], references: [id])
+  createdBy           User                 @relation("IssueCreatedBy", fields: [createdById], references: [id])
+  assignedDeveloper   User?                @relation("IssueAssignedDeveloper", fields: [assignedDeveloperId], references: [id])
+  
+  assignments         IssueAssignment[]
+  statusHistory       IssueStatusHistory[]
+  resolutions         IssueResolution[]
+  testingRecords      TestingRecord[]
+  regressionRecords   RegressionRecord[]
+  comments            IssueComment[]
+  attachments         IssueAttachment[]
+  deadlineReminders   DeadlineReminder[]
+  notifications       Notification[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([assignedDeveloperId])
+  @@index([createdById])
+  @@index([softwareId])
+  @@index([deadlineTimestamp])
+  @@index([createdAt])
+}
+
+model IssueAssignment {
+  id             String    @id @default(uuid())
+  issueId        String
+  developerId    String
+  assignedById   String
+  deadline       DateTime?
+  notes          String?
+  createdAt      DateTime  @default(now())
+
+  issue          Issue     @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  developer      User      @relation("AssignmentDeveloper", fields: [developerId], references: [id])
+  assignedBy     User      @relation("AssignmentBy", fields: [assignedById], references: [id])
+
+  @@index([issueId])
+  @@index([developerId])
+}
+
+model IssueStatusHistory {
+  id          String       @id @default(uuid())
+  issueId     String
+  changedById String
+  fromStatus  IssueStatus
+  toStatus    IssueStatus
+  reason      String?
+  createdAt   DateTime     @default(now())
+
+  issue       Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  changedBy   User         @relation("StatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([issueId])
+  @@index([createdAt])
+}
+
+model IssueResolution {
+  id              String             @id @default(uuid())
+  issueId         String
+  developerId     String
+  resolutionText  String
+  rootCause       String
+  filesChanged    String?
+  commitRef       String?
+  additionalNotes String?
+  createdAt       DateTime           @default(now())
+
+  issue           Issue              @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  developer       User               @relation("ResolutionDeveloper", fields: [developerId], references: [id])
+  attachments     IssueAttachment[]
+
+  @@index([issueId])
+  @@index([developerId])
+}
+
+model TestingRecord {
+  id           String             @id @default(uuid())
+  issueId      String
+  testerId     String
+  result       TestResult
+  testingNotes String
+  testedAt     DateTime           @default(now())
+
+  issue        Issue              @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  tester       User               @relation("TestedBy", fields: [testerId], references: [id])
+  attachments  IssueAttachment[]
+
+  @@index([issueId])
+  @@index([testerId])
+}
+
+model RegressionRecord {
+  id              String             @id @default(uuid())
+  issueId         String
+  testerId        String
+  result          RegressionResult
+  regressionNotes String?
+  testedAt        DateTime           @default(now())
+
+  issue           Issue              @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  tester          User               @relation("RegressionBy", fields: [testerId], references: [id])
+  attachments     IssueAttachment[]
+
+  @@index([issueId])
+  @@index([testerId])
+}
+
+model IssueComment {
+  id        String   @id @default(uuid())
+  issueId   String
+  authorId  String
+  message   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author    User     @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  @@index([issueId])
+  @@index([authorId])
+}
+
+model IssueAttachment {
+  id            String            @id @default(uuid())
+  issueId       String
+  resolutionId  String?
+  testingId     String?
+  regressionId  String?
+  fileName      String
+  fileUrl       String
+  fileSize      Int               // In bytes
+  mimeType      String
+  uploadedById  String
+  createdAt     DateTime          @default(now())
+
+  issue         Issue             @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  resolution    IssueResolution?  @relation(fields: [resolutionId], references: [id])
+  testing       TestingRecord?    @relation(fields: [testingId], references: [id])
+  regression    RegressionRecord? @relation(fields: [regressionId], references: [id])
+  uploadedBy    User              @relation("AttachmentUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([issueId])
+  @@index([uploadedById])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  issueId   String?
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  issue     Issue?           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+model PushSubscription {
+  id         String   @id @default(uuid())
+  userId     String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  userAgent  String?
+  deviceName String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  desktopPush         Boolean  @default(true)
+  email               Boolean  @default(true)
+  issueAssigned       Boolean  @default(true)
+  statusChanged       Boolean  @default(true)
+  deadline30Min       Boolean  @default(true)
+  deadline10Min       Boolean  @default(true)
+  deadlineOverdue     Boolean  @default(true)
+  issueFixed          Boolean  @default(true)
+  issueReopened       Boolean  @default(true)
+  testingRequired     Boolean  @default(true)
+  regressionRequired  Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model DeadlineReminder {
+  id           String               @id @default(uuid())
+  issueId      String
+  developerId  String
+  reminderType DeadlineReminderType
+  sentAt       DateTime             @default(now())
+
+  issue        Issue                @relation(fields: [issueId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, reminderType])
+  @@index([issueId])
+  @@index([developerId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String   // e.g. "USER_CREATED", "ISSUE_ASSIGNED", "STATUS_OVERRIDE", "RESOLUTION_SUBMITTED"
+  entityType String   // "Issue", "User", "Resolution", "Testing"
+  entityId   String
+  oldValue   String?  // JSON string
+  newValue   String?  // JSON string
+  metadata   String?  // JSON string (IP, user agent, notes)
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
