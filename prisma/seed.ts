@@ -27,10 +27,10 @@ async function main() {
   const adminPasswordHash = await bcrypt.hash("Admin@123", 10);
   const shrikeshPasswordHash = await bcrypt.hash("041203", 10);
   const irfanPasswordHash = await bcrypt.hash("test@irfan", 10);
-  const qaizPasswordHash = await bcrypt.hash("d1@qaiz", 10);
+  const qaizPasswordHash = await bcrypt.hash("d4@qaiz", 10);
   const srushtiPasswordHash = await bcrypt.hash("d2@srushti", 10);
   const murliPasswordHash = await bcrypt.hash("d3@murli", 10);
-  const divyaPasswordHash = await bcrypt.hash("d4@divya", 10);
+  const divyaPasswordHash = await bcrypt.hash("d1@divya", 10);
   const hafeezPasswordHash = await bcrypt.hash("d5@hafeez", 10);
   const jamilPasswordHash = await bcrypt.hash("d6@jamil", 10);
 
@@ -77,7 +77,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: "Qaiz",
-        email: "Qaiz@01",
+        email: "Qaiz@04",
         passwordHash: qaizPasswordHash,
         role: Role.DEVELOPER,
         isActive: true,
@@ -107,7 +107,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: "Divya",
-        email: "Divya@04",
+        email: "Divya@01",
         passwordHash: divyaPasswordHash,
         role: Role.DEVELOPER,
         isActive: true,

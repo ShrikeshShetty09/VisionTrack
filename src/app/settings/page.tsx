@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Settings,
   Bell,
@@ -12,13 +12,32 @@ import {
   AlertCircle,
   Loader2,
   Clock,
+  User,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [testingPush, setTestingPush] = useState(false);
   const [pushStatus, setPushStatus] = useState("");
+
+  // Profile Credentials State
+  const [profileName, setProfileName] = useState("");
+  const [profileEmail, setProfileEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState("");
+  const [profileError, setProfileError] = useState("");
+
+  // Sync user details once loaded
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || "");
+      setProfileEmail(user.email || "");
+    }
+  }, [user]);
 
   // Notification Preferences State
   const [desktopPush, setDesktopPush] = useState(true);
@@ -53,6 +72,47 @@ export default function SettingsPage() {
     }
   };
 
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    if (newPassword && newPassword !== confirmPassword) {
+      setProfileError("Passwords do not match.");
+      setProfileSuccess("");
+      return;
+    }
+
+    setUpdatingProfile(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      const res = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: profileName,
+          email: profileEmail,
+          newPassword: newPassword || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update profile details.");
+      }
+
+      setProfileSuccess("Account credentials updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+      await refreshUser();
+    } catch (err: any) {
+      setProfileError(err.message || "An unexpected error occurred.");
+    } finally {
+      setUpdatingProfile(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -62,8 +122,104 @@ export default function SettingsPage() {
           <span>Settings & Notification Preferences</span>
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Configure real-time Web Push channels, deadline alerts, and email notifications
+          Configure real-time Web Push channels, credentials, and email notifications
         </p>
+      </div>
+
+      {/* Profile & Credentials Form Card */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-5">
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <ShieldCheck className="h-4.5 w-4.5 text-blue-600" />
+            <span>Update Account & Credentials</span>
+          </h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Change your display name, username/email, or reset your login password
+          </p>
+        </div>
+
+        {profileSuccess && (
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+            <span>{profileSuccess}</span>
+          </div>
+        )}
+
+        {profileError && (
+          <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 rounded-xl text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+            <span>{profileError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleUpdateProfile} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                Display Name
+              </label>
+              <input
+                type="text"
+                required
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                Username / Email
+              </label>
+              <input
+                type="text"
+                required
+                value={profileEmail}
+                onChange={(e) => setProfileEmail(e.target.value)}
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                New Password (leave blank to keep current)
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1.5">
+                Confirm New Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-1 focus:ring-blue-600 focus:border-blue-600 outline-none transition"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={updatingProfile}
+              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5 disabled:cursor-not-allowed"
+            >
+              {updatingProfile ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
       </div>
 
       {/* Browser Web Push Banner Card */}

@@ -10,11 +10,18 @@ export const dynamic = "force-dynamic";
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const currentUser = await getCurrentUser();
-    if (!currentUser || currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Only administrators can update user accounts." }, { status: 403 });
+    if (!currentUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = params.id;
+    const isSelf = currentUser.id === userId;
+    const isAdmin = currentUser.role === "ADMIN";
+
+    if (!isAdmin && !isSelf) {
+      return NextResponse.json({ error: "You can only update your own profile details." }, { status: 403 });
+    }
+
     const body = await req.json();
     const { name, email, role, isActive, newPassword } = body;
 
@@ -29,9 +36,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const updateData: any = {};
     if (name) updateData.name = name.trim();
     if (email) updateData.email = email.toLowerCase().trim();
-    if (role && ["ADMIN", "TESTER", "DEVELOPER"].includes(role)) updateData.role = role as Role;
-    if (typeof isActive === "boolean") updateData.isActive = isActive;
-    if (newPassword && newPassword.trim().length >= 6) {
+    
+    // Only administrators can change roles and activation status
+    if (isAdmin) {
+      if (role && ["ADMIN", "TESTER", "DEVELOPER"].includes(role)) {
+        updateData.role = role as Role;
+      }
+      if (typeof isActive === "boolean") {
+        updateData.isActive = isActive;
+      }
+    }
+
+    if (newPassword && newPassword.trim().length > 0) {
+      if (newPassword.trim().length < 6) {
+        return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
+      }
       updateData.passwordHash = await hashPassword(newPassword.trim());
     }
 
@@ -58,9 +77,9 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
     });
 
-    return NextResponse.json({ success: true, user: updated, message: "User updated successfully." });
+    return NextResponse.json({ success: true, user: updated, message: "Account updated successfully." });
   } catch (error: any) {
     console.error("[User PUT Error]:", error);
-    return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update user account details." }, { status: 500 });
   }
 }
