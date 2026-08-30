@@ -33,24 +33,23 @@ export function NotificationBell() {
 
   const showNativeNotification = (title: string, message: string, issueCode?: string) => {
     if (typeof window === "undefined" || !("Notification" in window)) return;
-    if (Notification.permission === "granted") {
-      try {
-        const notif = new Notification(title, {
-          body: message,
-          icon: "/logo.png",
-          badge: "/logo.png",
-          tag: `vt-local-${Date.now()}`,
-          requireInteraction: true,
-        });
-        notif.onclick = () => {
-          window.focus();
-          if (issueCode) {
-            router.push(`/issues/${issueCode}`);
-          }
-        };
-      } catch (err) {
-        console.warn("[Local Browser Notification Error]:", err);
-      }
+    if (Notification.permission !== "granted") return;
+
+    // Use ServiceWorkerRegistration.showNotification() — required in browsers with active SW
+    // (new Notification() from page context is deprecated and silently ignored in Chrome/Edge)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready
+        .then((reg) => {
+          return reg.showNotification(title, {
+            body: message,
+            icon: "/logo.png",
+            badge: "/logo.png",
+            tag: `vt-local-${Date.now()}`,
+            requireInteraction: true,
+            data: { issueCode },
+          } as NotificationOptions);
+        })
+        .catch((err) => console.warn("[SW Notification Error]:", err));
     }
   };
 

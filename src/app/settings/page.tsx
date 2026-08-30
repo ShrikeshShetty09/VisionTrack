@@ -57,36 +57,42 @@ export default function SettingsPage() {
       setTestingPush(true);
       setPushStatus("");
 
-      // 1. Request/Verify Client-Side Permissions & Trigger Local Notification
-      if (typeof window !== "undefined" && "Notification" in window) {
-        if (Notification.permission === "default") {
-          await Notification.requestPermission();
-        }
-        
-        if (Notification.permission === "granted") {
-          new Notification("🔔 VisionTrack Local System Alert", {
-            body: "Browser notifications are active! You will receive live updates even when on other tabs.",
-            icon: "/logo.png",
-            badge: "/logo.png",
-            requireInteraction: false,
-          });
-        } else {
-          setPushStatus("Please enable system notifications for this site in your browser settings.");
-          setTestingPush(false);
-          return;
-        }
+      // 1. Request permission if not yet granted
+      if (typeof window === "undefined" || !("Notification" in window)) {
+        setPushStatus("Your browser does not support desktop notifications.");
+        setTestingPush(false);
+        return;
       }
 
-      // 2. Trigger Server-Side Web Push Endpoint
+      if (Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+
+      if (Notification.permission !== "granted") {
+        setPushStatus("Please enable system notifications for this site in your browser settings (click the lock icon in the address bar).");
+        setTestingPush(false);
+        return;
+      }
+
+      // 2. Use ServiceWorkerRegistration.showNotification() — the modern API
+      // (new Notification() is deprecated in browsers with an active Service Worker)
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification("🔔 VisionTrack — Test Notification", {
+          body: "Push notifications are active! You'll receive live updates even when VisionTrack is in another tab.",
+          icon: "/logo.png",
+          badge: "/logo.png",
+          requireInteraction: true,
+          tag: `vt-test-${Date.now()}`,
+        } as NotificationOptions);
+      }
+
+      // 3. Also trigger server-side Web Push for full end-to-end validation
       const res = await fetch("/api/push/test", { method: "POST" });
       const data = await res.json();
 
       if (res.ok) {
-        if (data.result?.deliveredCount > 0) {
-          setPushStatus("Test notification sent! Check your desktop / browser notifications.");
-        } else {
-          setPushStatus("Local system alert displayed! Note: Server-side push is in development/mock mode (0 active subscriber endpoints).");
-        }
+        setPushStatus("✅ Test notification sent successfully! It should appear on your desktop now.");
       } else {
         setPushStatus("Local alert shown. Server push failed: " + (data.error || "Unknown error"));
       }

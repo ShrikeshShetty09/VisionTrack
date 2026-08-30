@@ -63,9 +63,14 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  const targetUrl = event.notification.data && event.notification.data.url
-    ? event.notification.data.url
-    : '/dashboard';
+  const data = event.notification.data || {};
+  // Support both url (from web push) and issueCode (from local SW notifications)
+  let targetUrl = '/dashboard';
+  if (data.url) {
+    targetUrl = data.url;
+  } else if (data.issueCode) {
+    targetUrl = `/issues/${data.issueCode}`;
+  }
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
