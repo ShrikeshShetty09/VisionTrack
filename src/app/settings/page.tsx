@@ -57,13 +57,38 @@ export default function SettingsPage() {
       setTestingPush(true);
       setPushStatus("");
 
+      // 1. Request/Verify Client-Side Permissions & Trigger Local Notification
+      if (typeof window !== "undefined" && "Notification" in window) {
+        if (Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+        
+        if (Notification.permission === "granted") {
+          new Notification("🔔 VisionTrack Local System Alert", {
+            body: "Browser notifications are active! You will receive live updates even when on other tabs.",
+            icon: "/logo.png",
+            badge: "/logo.png",
+            requireInteraction: false,
+          });
+        } else {
+          setPushStatus("Please enable system notifications for this site in your browser settings.");
+          setTestingPush(false);
+          return;
+        }
+      }
+
+      // 2. Trigger Server-Side Web Push Endpoint
       const res = await fetch("/api/push/test", { method: "POST" });
       const data = await res.json();
 
       if (res.ok) {
-        setPushStatus("Test notification sent! Check your desktop / browser notifications.");
+        if (data.result?.deliveredCount > 0) {
+          setPushStatus("Test notification sent! Check your desktop / browser notifications.");
+        } else {
+          setPushStatus("Local system alert displayed! Note: Server-side push is in development/mock mode (0 active subscriber endpoints).");
+        }
       } else {
-        setPushStatus("Failed to send test push: " + (data.error || "Unknown error"));
+        setPushStatus("Local alert shown. Server push failed: " + (data.error || "Unknown error"));
       }
     } catch (err: any) {
       setPushStatus("Error: " + err.message);
