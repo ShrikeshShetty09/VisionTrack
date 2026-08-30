@@ -31,13 +31,48 @@ export function NotificationBell() {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const fetchNotifications = async () => {
+  const showNativeNotification = (title: string, message: string, issueCode?: string) => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      try {
+        const notif = new Notification(title, {
+          body: message,
+          icon: "/logo.png",
+          badge: "/logo.png",
+          tag: `vt-local-${Date.now()}`,
+          requireInteraction: true,
+        });
+        notif.onclick = () => {
+          window.focus();
+          if (issueCode) {
+            router.push(`/issues/${issueCode}`);
+          }
+        };
+      } catch (err) {
+        console.warn("[Local Browser Notification Error]:", err);
+      }
+    }
+  };
+
+  const fetchNotifications = async (isSubsequent = false) => {
     if (!user) return;
     try {
       const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications || []);
+        const newNotifications: NotificationItem[] = data.notifications || [];
+
+        // If it's a subsequent poll, detect new unread messages and pop them up natively
+        if (isSubsequent && notifications.length > 0) {
+          const existingIds = new Set(notifications.map((n) => n.id));
+          newNotifications.forEach((n) => {
+            if (!n.isRead && !existingIds.has(n.id)) {
+              showNativeNotification(n.title, n.message, n.issue?.issueCode);
+            }
+          });
+        }
+
+        setNotifications(newNotifications);
         setUnreadCount(data.unreadCount || 0);
       }
     } catch (err) {
@@ -46,10 +81,12 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000); // Polling every 15s
+    fetchNotifications(false);
+    const interval = setInterval(() => {
+      fetchNotifications(true);
+    }, 5000); // Poll more frequently (every 5 seconds) for real-time responsiveness
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, notifications]);
 
   // Click outside to close
   useEffect(() => {

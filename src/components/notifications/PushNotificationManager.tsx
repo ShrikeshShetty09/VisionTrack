@@ -23,6 +23,36 @@ export function PushNotificationManager() {
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
 
+  // Helper to save subscription to database
+  const syncSubscriptionWithBackend = async (sub: PushSubscription) => {
+    try {
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subscription: sub,
+          deviceName: navigator.userAgent.includes("Windows") ? "Windows Desktop" : "Workstation Browser",
+        }),
+      });
+    } catch (err) {
+      console.warn("[Push Auto-Sync]: Backend sync failed:", err);
+    }
+  };
+
+  const autoSubscribe = async (reg: ServiceWorkerRegistration) => {
+    try {
+      const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "BOH0q90z44pZq9v8MvUeX_qU4jB9bT3aP0lJ8f3m1cT0pQ2n4r6v8x0z2y4w6u8s0q2n4r6v8x0z2y4w6u8s0";
+      const newSub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      setIsSubscribed(true);
+      await syncSubscriptionWithBackend(newSub);
+    } catch (err) {
+      console.warn("[Push Auto-Subscribe Error]: Failed to create background subscription:", err);
+    }
+  };
+
   useEffect(() => {
     if (!user || typeof window === "undefined" || !("serviceWorker" in navigator) || !("Notification" in window)) {
       return;
@@ -37,6 +67,11 @@ export function PushNotificationManager() {
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
           setIsSubscribed(true);
+          // Always keep subscription synced to backend for current user session
+          await syncSubscriptionWithBackend(sub);
+        } else if (Notification.permission === "granted") {
+          // If browser granted permissions earlier, auto-renew subscription silently
+          await autoSubscribe(reg);
         } else if (Notification.permission === "default") {
           // Show banner if not asked yet
           const dismissed = sessionStorage.getItem("vt-push-banner-dismissed");
