@@ -67,13 +67,14 @@ export function PushNotificationManager() {
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
           setIsSubscribed(true);
-          // Always keep subscription synced to backend for current user session
+          // Always sync subscription to backend; if the backend had the entry deleted,
+          // this re-registers it for the current user session
           await syncSubscriptionWithBackend(sub);
         } else if (Notification.permission === "granted") {
-          // If browser granted permissions earlier, auto-renew subscription silently
+          // Permission already granted but no subscription — auto-create one silently
           await autoSubscribe(reg);
         } else if (Notification.permission === "default") {
-          // Show banner if not asked yet
+          // Show opt-in banner if not dismissed yet
           const dismissed = sessionStorage.getItem("vt-push-banner-dismissed");
           if (!dismissed) {
             setShowBanner(true);

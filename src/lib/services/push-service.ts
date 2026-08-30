@@ -5,7 +5,8 @@ const VAPID_PUBLIC_KEY =
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
   "BOH0q90z44pZq9v8MvUeX_qU4jB9bT3aP0lJ8f3m1cT0pQ2n4r6v8x0z2y4w6u8s0q2n4r6v8x0z2y4w6u8s0";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "YOUR_VAPID_PRIVATE_KEY";
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:support@visiondatalabs.com";
+const _rawSubject = process.env.VAPID_SUBJECT || "support@visiondatalabs.com";
+const VAPID_SUBJECT = _rawSubject.startsWith("mailto:") ? _rawSubject : `mailto:${_rawSubject}`;
 
 let vapidConfigured = false;
 
