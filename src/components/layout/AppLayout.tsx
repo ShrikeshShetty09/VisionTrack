@@ -129,8 +129,131 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       {/* Top Banner for Push Notification Setup */}
       <PushNotificationManager />
 
+      {/* Mobile Overlay Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Layout Shell */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Mobile Sidebar Drawer */}
+        <aside className={`fixed inset-y-0 left-0 z-50 flex flex-col w-72 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-300 md:hidden ${
+          mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}>
+          {/* Brand Header */}
+          <div className="h-16 px-4 flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="relative h-9 w-9 shrink-0 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white p-0.5">
+                <Image src="/logo.png" alt="Vision Datalabs Logo" fill className="object-contain" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="font-bold text-base tracking-tight text-slate-900 dark:text-white leading-none">
+                  VisionTrack
+                </span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate mt-0.5">
+                  Vision Datalabs QA
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            {navItems.map((item, idx) => {
+              if (item.heading) {
+                if (user && !item.roles.includes(user.role)) return null;
+                return (
+                  <div key={idx} className="pt-4 pb-1">
+                    <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                      {item.heading}
+                    </p>
+                    <div className="mt-1 space-y-0.5">
+                      {item.items.map((sub: any, sIdx: number) => {
+                        const active = sub.href === fullUrl || (sub.href === pathname && !searchParams.toString());
+                        const Icon = sub.icon;
+                        return (
+                          <Link
+                            key={sIdx}
+                            href={sub.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition ${
+                              active
+                                ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold"
+                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                            }`}
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
+                            <span>{sub.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              if (user && item.roles && !item.roles.includes(user.role)) return null;
+              const Icon = item.icon!;
+              const active = item.href === fullUrl || (item.href === pathname && !searchParams.toString());
+
+              return (
+                <Link
+                  key={idx}
+                  href={item.href!}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium transition ${
+                    item.highlight
+                      ? "bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-sm"
+                      : active
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold"
+                      : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* User Profile Footer */}
+          {user && (
+            <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-8 w-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {user.name.charAt(0)}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
+                      {user.name}
+                    </span>
+                    <span className={`text-[10px] px-1.5 py-0.2 inline-block rounded font-medium border w-fit ${roleConfig?.bg}`}>
+                      {roleConfig?.label}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
+                  title="Logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </aside>
+
         {/* Sidebar Desktop */}
         <aside className="hidden md:flex flex-col w-64 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 z-30 shrink-0">
           {/* Brand Header */}
