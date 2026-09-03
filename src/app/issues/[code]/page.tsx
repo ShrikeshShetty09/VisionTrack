@@ -26,7 +26,9 @@ import {
   Loader2,
   AlertCircle,
   Send,
+  Copy,
 } from "lucide-react";
+import { format } from "date-fns";
 import { useAuth } from "@/components/auth-provider";
 import { formatDate, formatDeadline, getStatusBadgeConfig, getPriorityBadgeConfig, getRoleBadgeConfig } from "@/lib/utils";
 import { DeveloperFixModal } from "@/components/issues/DeveloperFixModal";
@@ -122,6 +124,13 @@ export default function IssueDetailPage() {
   const isTester = user?.role === "TESTER" || user?.role === "ADMIN";
   const statusBadge = getStatusBadgeConfig(issue.status);
   const priorityBadge = getPriorityBadgeConfig(issue.priority);
+
+  const latestResolution = issue.resolutions?.[0];
+  const isLateSubmitted = Boolean(
+    issue.deadlineTimestamp &&
+    latestResolution?.createdAt &&
+    new Date(latestResolution.createdAt).getTime() > new Date(issue.deadlineTimestamp).getTime()
+  );
 
   // Quick Developer Status Update (e.g. In Progress / In Review)
   const handleDeveloperStatusChange = async (targetStatus: string) => {
@@ -247,6 +256,12 @@ export default function IssueDetailPage() {
             <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${statusBadge.bg}`}>
               {statusBadge.label}
             </span>
+            {isLateSubmitted && (
+              <span className="text-xs px-2.5 py-1 rounded-full border font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                <AlertTriangle className="h-3 w-3" />
+                Late submitted on {formatDate(latestResolution.createdAt)}
+              </span>
+            )}
           </div>
         </div>
 
@@ -378,6 +393,12 @@ export default function IssueDetailPage() {
                 >
                   {formatDeadline(issue.deadlineTimestamp)}
                 </span>
+                {isLateSubmitted && (
+                  <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                    <AlertTriangle className="h-3 w-3 shrink-0 text-amber-600" />
+                    Late submitted on {formatDate(latestResolution.createdAt)}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -450,9 +471,17 @@ export default function IssueDetailPage() {
                     </p>
                   </div>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-600 border border-cyan-300 dark:border-cyan-800">
-                  Fixed
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/15 text-cyan-600 border border-cyan-300 dark:border-cyan-800">
+                    Fixed
+                  </span>
+                  {isLateSubmitted && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 flex items-center gap-1">
+                      <AlertTriangle className="h-3 w-3" />
+                      Late submitted on {formatDate(latestResolution.createdAt)}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-3 text-xs">
@@ -476,25 +505,55 @@ export default function IssueDetailPage() {
                   </p>
                 </div>
 
-                {/* Files / Commit references */}
-                {(issue.resolutions[0].filesChanged || issue.resolutions[0].commitRef) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    {issue.resolutions[0].filesChanged && (
-                      <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-[11px]">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Files Changed:</span>
-                        <span className="text-slate-800 dark:text-slate-200 truncate block">
-                          {issue.resolutions[0].filesChanged}
+                {/* Files Changed (Wide layout) */}
+                {issue.resolutions[0].filesChanged && (
+                  <div className="w-full pt-1">
+                    <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">
+                          Files Changed:
                         </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(issue.resolutions[0].filesChanged);
+                            showToast("Files list copied to clipboard!");
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:text-blue-600 text-slate-600 dark:text-slate-300 transition flex items-center gap-1"
+                        >
+                          <Copy className="h-3 w-3" />
+                          <span>Copy Files</span>
+                        </button>
                       </div>
-                    )}
-                    {issue.resolutions[0].commitRef && (
-                      <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-[11px]">
-                        <span className="text-slate-400 block text-[10px] uppercase font-bold">Commit / PR:</span>
-                        <span className="text-slate-800 dark:text-slate-200 truncate block">
+                      <div className="font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-all leading-relaxed max-h-72 overflow-y-auto bg-white/70 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200/60 dark:border-slate-700/40 select-all">
+                        {issue.resolutions[0].filesChanged}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Commit / PR reference */}
+                {issue.resolutions[0].commitRef && (
+                  <div className="w-full pt-1">
+                    <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-slate-400 text-[10px] uppercase font-bold shrink-0">Commit / PR:</span>
+                        <span className="text-slate-800 dark:text-slate-200 font-mono text-xs truncate">
                           {issue.resolutions[0].commitRef}
                         </span>
                       </div>
-                    )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(issue.resolutions[0].commitRef);
+                          showToast("Commit / PR reference copied!");
+                        }}
+                        className="px-2 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:text-blue-600 text-slate-600 dark:text-slate-300 transition shrink-0 flex items-center gap-1"
+                      >
+                        <Copy className="h-3 w-3" />
+                        <span>Copy</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -757,6 +816,17 @@ export default function IssueDetailPage() {
           issueCode={issue.issueCode}
           issueTitle={issue.title}
           currentDeveloperId={issue.assignedDeveloperId}
+          currentDeadlineDate={
+            issue.deadlineTimestamp
+              ? format(new Date(issue.deadlineTimestamp), "yyyy-MM-dd")
+              : issue.deadlineDate
+              ? format(new Date(issue.deadlineDate), "yyyy-MM-dd")
+              : ""
+          }
+          currentDeadlineTime={
+            issue.deadlineTime ||
+            (issue.deadlineTimestamp ? format(new Date(issue.deadlineTimestamp), "HH:mm") : "18:30")
+          }
           onAssigned={async () => {
             await fetchIssueDetail(true);
             showToast("Developer assigned successfully!");

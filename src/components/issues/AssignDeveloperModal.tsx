@@ -37,6 +37,17 @@ export function AssignDeveloperModal({
   const [warningIgnored, setWarningIgnored] = useState(false);
 
   useEffect(() => {
+    if (isOpen) {
+      setSelectedDevId(currentDeveloperId || "");
+      setDeadlineDate(currentDeadlineDate || "");
+      setDeadlineTime(currentDeadlineTime || "18:30");
+      setNotes("");
+      setError("");
+      setWarningIgnored(false);
+    }
+  }, [isOpen, currentDeveloperId, currentDeadlineDate, currentDeadlineTime]);
+
+  useEffect(() => {
     if (!isOpen) return;
     const fetchDevelopers = async () => {
       try {
@@ -90,6 +101,11 @@ export function AssignDeveloperModal({
     setError("");
 
     try {
+      // Accurately compute client-side local ISO timestamp so server doesn't alter date or time
+      const [year, month, day] = deadlineDate.split("-").map(Number);
+      const [h, m] = (deadlineTime || "18:30").split(":").map(Number);
+      const localDeadline = new Date(year, month - 1, day, isNaN(h) ? 18 : h, isNaN(m) ? 30 : m, 0, 0);
+
       const res = await fetch(`/api/issues/${issueCode}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -97,7 +113,8 @@ export function AssignDeveloperModal({
           action: "ASSIGN_DEVELOPER",
           developerId: selectedDevId,
           deadlineDate,
-          deadlineTime,
+          deadlineTime: deadlineTime || "18:30",
+          deadlineTimestamp: localDeadline.toISOString(),
           notes,
         }),
       });

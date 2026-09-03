@@ -485,19 +485,28 @@ function IssuesTableContent() {
                       {/* Deadline */}
                       <td className="py-3.5 px-4">
                         {issue.deadlineTimestamp ? (
-                          <div className="flex items-center gap-1">
-                            {issue.isOverdue && issue.status !== "RESOLVED" && (
-                              <Flame className="h-3.5 w-3.5 text-red-500 shrink-0 animate-pulse" />
-                            )}
-                            <span
-                              className={`text-[11px] font-mono ${
-                                issue.isOverdue && issue.status !== "RESOLVED"
-                                  ? "text-red-600 dark:text-red-400 font-bold"
-                                  : "text-slate-600 dark:text-slate-400"
-                              }`}
-                            >
-                              {formatDeadline(issue.deadlineTimestamp)}
-                            </span>
+                          <div>
+                            <div className="flex items-center gap-1">
+                              {issue.isOverdue && issue.status !== "RESOLVED" && (
+                                <Flame className="h-3.5 w-3.5 text-red-500 shrink-0 animate-pulse" />
+                              )}
+                              <span
+                                className={`text-[11px] font-mono ${
+                                  issue.isOverdue && issue.status !== "RESOLVED"
+                                    ? "text-red-600 dark:text-red-400 font-bold"
+                                    : "text-slate-600 dark:text-slate-400"
+                                }`}
+                              >
+                                {formatDeadline(issue.deadlineTimestamp)}
+                              </span>
+                            </div>
+                            {issue.resolutions?.[0]?.createdAt &&
+                              new Date(issue.resolutions[0].createdAt).getTime() >
+                                new Date(issue.deadlineTimestamp).getTime() && (
+                                <span className="inline-block mt-0.5 text-[9px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900/40">
+                                  Late submitted
+                                </span>
+                              )}
                           </div>
                         ) : (
                           <span className="text-slate-400">—</span>

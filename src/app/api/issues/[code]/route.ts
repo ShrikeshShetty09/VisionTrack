@@ -127,7 +127,7 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         return NextResponse.json({ error: "Only Testers and Admins can assign issues." }, { status: 403 });
       }
 
-      const { developerId, deadlineDate, deadlineTime, notes } = body;
+      const { developerId, deadlineDate, deadlineTime, deadlineTimestamp: clientDeadlineTimestamp, notes } = body;
       if (!developerId) {
         return NextResponse.json({ error: "Please select a developer." }, { status: 400 });
       }
@@ -140,20 +140,13 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         return NextResponse.json({ error: "Selected developer is inactive or invalid." }, { status: 400 });
       }
 
-      // Compute deadline timestamp
+      // Compute deadline timestamp accurately
       let deadlineTimestamp: Date | null = null;
-      if (deadlineDate) {
-        const [year, month, day] = deadlineDate.split("-").map(Number);
-        let hours = 18;
-        let minutes = 30;
-        if (deadlineTime) {
-          const [h, m] = deadlineTime.split(":").map(Number);
-          if (!isNaN(h) && !isNaN(m)) {
-            hours = h;
-            minutes = m;
-          }
-        }
-        deadlineTimestamp = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+      if (clientDeadlineTimestamp) {
+        deadlineTimestamp = new Date(clientDeadlineTimestamp);
+      } else if (deadlineDate) {
+        const timeStr = deadlineTime && deadlineTime.includes(":") ? deadlineTime : "18:30";
+        deadlineTimestamp = new Date(`${deadlineDate}T${timeStr}`);
       }
 
       const prevDevId = issue.assignedDeveloperId;

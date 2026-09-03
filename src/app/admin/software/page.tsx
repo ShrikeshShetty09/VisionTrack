@@ -14,6 +14,7 @@ import {
   X,
   Edit2,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { formatDate } from "@/lib/utils";
@@ -131,6 +132,48 @@ export default function AdminSoftwarePage() {
     }
   };
 
+  const handleDeleteModule = async (moduleId: string, moduleName: string) => {
+    if (!window.confirm(`Are you sure you want to remove the module "${moduleName}"?`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/software?moduleId=${moduleId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to remove module");
+      }
+      await fetchSoftware();
+    } catch (err: any) {
+      alert(err.message || "Failed to remove module");
+    }
+  };
+
+  const handleDeleteSoftware = async (softwareId: string, softwareName: string) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the software system "${softwareName}"? If it has logged defects, it will be deactivated and archived.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/software?softwareId=${softwareId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete software");
+      }
+      await fetchSoftware();
+    } catch (err: any) {
+      alert(err.message || "Failed to delete software");
+    }
+  };
+
   const filteredSoftware = softwareList.filter(
     (s) =>
       s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -244,12 +287,17 @@ export default function AdminSoftwarePage() {
                       sw.modules.map((m: any) => (
                         <div
                           key={m.id}
-                          className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs flex items-center gap-1.5"
+                          className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs flex items-center gap-1.5 group"
                         >
-                          <span className="font-mono font-bold text-[10px] text-blue-600 dark:text-blue-400">
-                            {m.code}
-                          </span>
                           <span className="text-slate-800 dark:text-slate-200 font-medium">{m.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteModule(m.id, m.name)}
+                            className="text-slate-400 hover:text-red-600 p-0.5 rounded transition hover:bg-red-50 dark:hover:bg-red-950/40"
+                            title={`Remove module "${m.name}"`}
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
                         </div>
                       ))
                     ) : (
@@ -261,7 +309,18 @@ export default function AdminSoftwarePage() {
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                 <span>Created {formatDate(sw.createdAt, "dd MMM yyyy")}</span>
-                <span className="font-mono text-slate-500">{sw.isActive ? "Active Suite" : "Inactive"}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-slate-500">{sw.isActive ? "Active Suite" : "Inactive"}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSoftware(sw.id, sw.name)}
+                    className="text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 px-2 py-1 rounded-lg text-xs font-medium transition flex items-center gap-1"
+                    title={`Delete "${sw.name}" software suite`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Delete</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -403,21 +462,7 @@ export default function AdminSoftwarePage() {
 
               <div>
                 <label className="block font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                  Module Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={modCode}
-                  onChange={(e) => setModCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. ANLYTICS"
-                  className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 font-mono uppercase"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                  Description
+                  Description (Optional)
                 </label>
                 <textarea
                   rows={2}

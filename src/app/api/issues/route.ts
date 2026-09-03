@@ -152,6 +152,7 @@ export async function POST(req: NextRequest) {
       assignedDeveloperId,
       deadlineDate,
       deadlineTime,
+      deadlineTimestamp: clientDeadlineTimestamp,
       attachments = [],
     } = body;
 
@@ -178,24 +179,13 @@ export async function POST(req: NextRequest) {
     }
     const issueCode = `VT-${String(nextNumber).padStart(6, "0")}`;
 
-    // Compute deadline timestamp if provided
+    // Compute deadline timestamp accurately if provided
     let deadlineTimestamp: Date | null = null;
-    let deadlineDateOnly: Date | null = null;
-    if (deadlineDate) {
-      const [year, month, day] = deadlineDate.split("-").map(Number);
-      let hours = 18;
-      let minutes = 30;
-      if (deadlineTime) {
-        const [h, m] = deadlineTime.split(":").map(Number);
-        if (!isNaN(h) && !isNaN(m)) {
-          hours = h;
-          minutes = m;
-        }
-      }
-      // Full timestamp for notifications / overdue checks
-      deadlineTimestamp = new Date(Date.UTC(year, month - 1, day, hours, minutes));
-      // Date-only value (midnight UTC) for the deadlineDate field
-      deadlineDateOnly = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+    if (clientDeadlineTimestamp) {
+      deadlineTimestamp = new Date(clientDeadlineTimestamp);
+    } else if (deadlineDate) {
+      const timeStr = deadlineTime && deadlineTime.includes(":") ? deadlineTime : "18:30";
+      deadlineTimestamp = new Date(`${deadlineDate}T${timeStr}`);
     }
 
     const initialStatus: IssueStatus = assignedDeveloperId ? "ASSIGNED" : "NEW";
@@ -213,7 +203,7 @@ export async function POST(req: NextRequest) {
         jobUrl: jobUrl?.trim() || null,
         createdById: user.id,
         assignedDeveloperId: assignedDeveloperId || null,
-        deadlineDate: deadlineDateOnly,          // date-only midnight UTC
+        deadlineDate: deadlineTimestamp,
         deadlineTime: deadlineTime || null,      // e.g. "18:30"
         deadlineTimestamp: deadlineTimestamp,    // full timestamp for alerts
         attachments: {
