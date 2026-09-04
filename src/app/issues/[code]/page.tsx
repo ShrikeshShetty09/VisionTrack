@@ -556,6 +556,43 @@ export default function IssueDetailPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Resolution Attachments / Evidence */}
+                {issue.resolutions[0].attachments && issue.resolutions[0].attachments.length > 0 && (
+                  <div className="pt-2">
+                    <span className="font-bold text-slate-700 dark:text-slate-300 block mb-1.5 text-xs">
+                      Resolution Evidence & Screenshots:
+                    </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {issue.resolutions[0].attachments.map((att: any) => {
+                        const isImg = att.mimeType?.startsWith("image/") || att.fileUrl?.match(/\.(png|jpe?g|webp|gif)$/i);
+                        return (
+                          <a
+                            key={att.id || att.fileUrl}
+                            href={att.fileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-950/80 hover:border-cyan-500 transition flex items-center gap-2 text-xs group"
+                          >
+                            {isImg ? (
+                              <img
+                                src={att.fileUrl}
+                                alt={att.fileName}
+                                className="h-8 w-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100"
+                              />
+                            ) : (
+                              <Paperclip className="h-4 w-4 text-cyan-600 shrink-0" />
+                            )}
+                            <span className="truncate text-slate-800 dark:text-slate-200 font-medium group-hover:text-cyan-600 flex-1">
+                              {att.fileName}
+                            </span>
+                            <ExternalLink className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -596,6 +633,43 @@ export default function IssueDetailPage() {
                     {test.testingNotes}
                   </p>
 
+                  {/* Testing Attachments */}
+                  {test.attachments && test.attachments.length > 0 && (
+                    <div className="pl-6 pt-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                        QA Evidence Logs ({test.attachments.length}):
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {test.attachments.map((att: any) => {
+                          const isImg = att.mimeType?.startsWith("image/") || att.fileUrl?.match(/\.(png|jpe?g|webp|gif)$/i);
+                          return (
+                            <a
+                              key={att.id || att.fileUrl}
+                              href={att.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:border-pink-500 transition flex items-center gap-2 text-xs group"
+                            >
+                              {isImg ? (
+                                <img
+                                  src={att.fileUrl}
+                                  alt={att.fileName}
+                                  className="h-7 w-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100"
+                                />
+                              ) : (
+                                <Paperclip className="h-3.5 w-3.5 text-pink-600 shrink-0" />
+                              )}
+                              <span className="truncate text-slate-800 dark:text-slate-200 font-medium group-hover:text-pink-600 flex-1">
+                                {att.fileName}
+                              </span>
+                              <ExternalLink className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-[11px] text-slate-500 pl-6">
                     Tested By: <strong className="text-slate-700 dark:text-slate-300">{test.tester.name}</strong>
                   </div>
@@ -626,6 +700,43 @@ export default function IssueDetailPage() {
                     <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed pl-6">
                       {reg.regressionNotes}
                     </p>
+                  )}
+
+                  {/* Regression Attachments */}
+                  {reg.attachments && reg.attachments.length > 0 && (
+                    <div className="pl-6 pt-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                        Regression Evidence ({reg.attachments.length}):
+                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {reg.attachments.map((att: any) => {
+                          const isImg = att.mimeType?.startsWith("image/") || att.fileUrl?.match(/\.(png|jpe?g|webp|gif)$/i);
+                          return (
+                            <a
+                              key={att.id || att.fileUrl}
+                              href={att.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 hover:border-teal-500 transition flex items-center gap-2 text-xs group"
+                            >
+                              {isImg ? (
+                                <img
+                                  src={att.fileUrl}
+                                  alt={att.fileName}
+                                  className="h-7 w-7 rounded-lg object-cover border border-slate-200 dark:border-slate-700 shrink-0 bg-slate-100"
+                                />
+                              ) : (
+                                <Paperclip className="h-3.5 w-3.5 text-teal-600 shrink-0" />
+                              )}
+                              <span className="truncate text-slate-800 dark:text-slate-200 font-medium group-hover:text-teal-600 flex-1">
+                                {att.fileName}
+                              </span>
+                              <ExternalLink className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
 
                   <div className="text-[11px] text-slate-500 pl-6">
