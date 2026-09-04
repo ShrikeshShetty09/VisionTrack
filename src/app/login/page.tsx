@@ -43,6 +43,15 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed. Please check your credentials.");
       }
 
+      if (typeof window !== "undefined") {
+        if (data.token) {
+          localStorage.setItem("visiontrack_token", data.token);
+        }
+        if (data.user) {
+          localStorage.setItem("visiontrack_user", JSON.stringify(data.user));
+        }
+      }
+
       await refreshUser();
       router.replace("/dashboard");
     } catch (err: any) {

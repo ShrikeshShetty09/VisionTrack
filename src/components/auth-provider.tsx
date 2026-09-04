@@ -20,6 +20,9 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
 });
 
+const TOKEN_STORAGE_KEY = "visiontrack_token";
+const USER_STORAGE_KEY = "visiontrack_user";
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserSession | null>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -27,21 +30,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Try instant restore from localStorage for smooth mobile APK experience
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
+
   const refreshUser = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const headers: Record<string, string> = {};
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+      }
+
+      const res = await fetch("/api/auth/me", { headers });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
         setUnreadCount(data.user?.unreadNotifications || 0);
+        if (typeof window !== "undefined" && data.user) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+        }
       } else {
+        // If server explicitly returned 401/403, clear cached session
         setUser(null);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          localStorage.removeItem(USER_STORAGE_KEY);
+        }
         if (pathname !== "/login" && !pathname.startsWith("/api")) {
           router.push("/login");
         }
       }
     } catch (err) {
-      setUser(null);
+      // On network failure or offline state, do not immediately kick out if user already cached
+      console.warn("[Auth] Failed to verify session with server:", err);
     } finally {
       setLoading(false);
     }
@@ -54,9 +88,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(USER_STORAGE_KEY);
+      }
       setUser(null);
-      router.push("/login");
-    } catch (err) {
       router.push("/login");
     }
   };

@@ -69,17 +69,21 @@ export async function POST(req: NextRequest) {
     const response = NextResponse.json({
       success: true,
       user: sessionPayload,
+      token,
       message: `Welcome back, ${user.name}!`,
     });
 
-    // Set secure HTTP-only cookie
+    const proto = req.headers.get("x-forwarded-proto");
+    const isHttps = proto === "https" || req.url.startsWith("https://");
+
+    // Set secure HTTP-only cookie (30 days persistence)
     response.cookies.set({
       name: SESSION_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: isHttps,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 30, // 30 days
       path: "/",
     });
 

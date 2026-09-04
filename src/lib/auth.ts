@@ -27,7 +27,7 @@ export function signSessionToken(user: UserSession): string {
       isActive: user.isActive,
     },
     JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "30d" }
   );
 }
 
@@ -40,10 +40,40 @@ export function verifySessionToken(token: string): UserSession | null {
   }
 }
 
-export async function getCurrentUser(): Promise<UserSession | null> {
+export async function getCurrentUser(req?: any): Promise<UserSession | null> {
   try {
-    const cookieStore = cookies();
-    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    let token: string | undefined;
+
+    // 1. Try from Next.js cookieStore
+    try {
+      const cookieStore = cookies();
+      token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+    } catch {
+      // cookies() might throw outside request context
+    }
+
+    // 2. Try from req headers if provided
+    if (!token && req) {
+      const authHeader = req.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.substring(7).trim();
+      }
+    }
+
+    // 3. Try from next/headers
+    if (!token) {
+      try {
+        const { headers } = await import("next/headers");
+        const headerStore = headers();
+        const authHeader = headerStore.get("authorization");
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.substring(7).trim();
+        }
+      } catch {
+        // Ignore
+      }
+    }
+
     if (!token) return null;
 
     const session = verifySessionToken(token);
