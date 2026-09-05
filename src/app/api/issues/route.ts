@@ -188,6 +188,26 @@ export async function POST(req: NextRequest) {
       deadlineTimestamp = new Date(`${deadlineDate}T${timeStr}`);
     }
 
+    // Normalize environment safely to prevent enum mismatch with Prisma
+    let resolvedEnvironment: Environment = "TESTING";
+    const envUpper = String(environment || "").toUpperCase().trim();
+    if (envUpper === "DEV" || envUpper === "DEVELOPMENT") {
+      resolvedEnvironment = "DEV";
+    } else if (envUpper === "PRODUCTION" || envUpper === "PROD") {
+      resolvedEnvironment = "PRODUCTION";
+    } else if (envUpper === "LOCAL") {
+      resolvedEnvironment = "LOCAL";
+    } else if (envUpper === "TESTING" || envUpper === "QA" || envUpper === "STAGING") {
+      resolvedEnvironment = "TESTING";
+    }
+
+    // Normalize priority safely
+    let resolvedPriority: Priority = "MEDIUM";
+    const prioUpper = String(priority || "").toUpperCase().trim();
+    if (["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(prioUpper)) {
+      resolvedPriority = prioUpper as Priority;
+    }
+
     const initialStatus: IssueStatus = assignedDeveloperId ? "ASSIGNED" : "NEW";
 
     const issue = await prisma.issue.create({
@@ -197,8 +217,8 @@ export async function POST(req: NextRequest) {
         description: description.trim(),
         softwareId,
         moduleId: moduleId || null,
-        environment: environment as Environment,
-        priority: priority as Priority,
+        environment: resolvedEnvironment,
+        priority: resolvedPriority,
         status: initialStatus,
         jobUrl: jobUrl?.trim() || null,
         createdById: user.id,

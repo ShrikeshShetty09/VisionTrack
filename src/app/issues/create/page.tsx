@@ -309,9 +309,9 @@ export default function CreateIssuePage() {
                 onChange={(e) => setEnvironment(e.target.value as Environment)}
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
               >
-                <option value="DEVELOPMENT">Development</option>
+                <option value="DEV">Development</option>
                 <option value="TESTING">QA / Testing</option>
-                <option value="STAGING">Staging / Pre-Prod</option>
+                <option value="LOCAL">Local Environment</option>
                 <option value="PRODUCTION">Production</option>
               </select>
             </div>
