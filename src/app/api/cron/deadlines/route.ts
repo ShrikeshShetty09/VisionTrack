@@ -16,10 +16,14 @@ export async function GET(req: NextRequest) {
         deadlineTimestamp: { not: null },
         status: { notIn: ["RESOLVED"] },
         deletedAt: null,
-        assignedDeveloperId: { not: null },
+        OR: [
+          { assignedDeveloperId: { not: null } },
+          { assignees: { some: {} } },
+        ],
       },
       include: {
         assignedDeveloper: true,
+        assignees: true,
         software: true,
         deadlineReminders: true,
       },
@@ -29,7 +33,14 @@ export async function GET(req: NextRequest) {
     const remindersLogged: string[] = [];
 
     for (const issue of activeIssues) {
-      if (!issue.deadlineTimestamp || !issue.assignedDeveloperId || !issue.assignedDeveloper) {
+      const allDevIds = Array.from(
+        new Set([
+          issue.assignedDeveloperId,
+          ...(issue.assignees?.map((a) => a.id) || []),
+        ].filter(Boolean) as string[])
+      );
+
+      if (!issue.deadlineTimestamp || allDevIds.length === 0) {
         continue;
       }
 
@@ -59,30 +70,31 @@ export async function GET(req: NextRequest) {
           await prisma.deadlineReminder.create({
             data: {
               issueId: issue.id,
-              developerId: issue.assignedDeveloperId,
+              developerId: allDevIds[0],
               reminderType: DeadlineReminderType.OVERDUE,
             },
           });
 
-          await dispatchNotification({
-            userId: issue.assignedDeveloperId,
-            type: "DEADLINE_OVERDUE",
-            title: `🚨 Issue Overdue — ${issue.issueCode}`,
-            message: `${issue.issueCode} (${issue.title}) has passed its deadline of ${deadlineFormatted}.`,
-            issueId: issue.id,
-            issueCode: issue.issueCode,
-            issueTitle: issue.title,
-            actionUrl: `/issues/${issue.issueCode}`,
-            requireInteraction: true,
-            emailDetails: [
-              { label: "Software", value: issue.software.name },
-              { label: "Priority", value: issue.priority },
-              { label: "Deadline", value: deadlineFormatted },
-              { label: "Current Status", value: issue.status },
-            ],
-          });
-
-          sentCount++;
+          for (const devId of allDevIds) {
+            await dispatchNotification({
+              userId: devId,
+              type: "DEADLINE_OVERDUE",
+              title: `🚨 Issue Overdue — ${issue.issueCode}`,
+              message: `${issue.issueCode} (${issue.title}) has passed its deadline of ${deadlineFormatted}.`,
+              issueId: issue.id,
+              issueCode: issue.issueCode,
+              issueTitle: issue.title,
+              actionUrl: `/issues/${issue.issueCode}`,
+              requireInteraction: true,
+              emailDetails: [
+                { label: "Software", value: issue.software.name },
+                { label: "Priority", value: issue.priority },
+                { label: "Deadline", value: deadlineFormatted },
+                { label: "Current Status", value: issue.status },
+              ],
+            });
+            sentCount++;
+          }
           remindersLogged.push(`OVERDUE: ${issue.issueCode}`);
         }
       }
@@ -92,29 +104,30 @@ export async function GET(req: NextRequest) {
           await prisma.deadlineReminder.create({
             data: {
               issueId: issue.id,
-              developerId: issue.assignedDeveloperId,
+              developerId: allDevIds[0],
               reminderType: DeadlineReminderType.REMINDER_10_MIN,
             },
           });
 
-          await dispatchNotification({
-            userId: issue.assignedDeveloperId,
-            type: "DEADLINE_10_MIN",
-            title: `🔴 Urgent: Deadline in 10 Minutes — ${issue.issueCode}`,
-            message: `Issue ${issue.issueCode} is due in ~10 minutes (${deadlineFormatted}).`,
-            issueId: issue.id,
-            issueCode: issue.issueCode,
-            issueTitle: issue.title,
-            actionUrl: `/issues/${issue.issueCode}`,
-            requireInteraction: true,
-            emailDetails: [
-              { label: "Software", value: issue.software.name },
-              { label: "Deadline", value: deadlineFormatted },
-              { label: "Time Remaining", value: "~10 Minutes" },
-            ],
-          });
-
-          sentCount++;
+          for (const devId of allDevIds) {
+            await dispatchNotification({
+              userId: devId,
+              type: "DEADLINE_10_MIN",
+              title: `🔴 Urgent: Deadline in 10 Minutes — ${issue.issueCode}`,
+              message: `Issue ${issue.issueCode} is due in ~10 minutes (${deadlineFormatted}).`,
+              issueId: issue.id,
+              issueCode: issue.issueCode,
+              issueTitle: issue.title,
+              actionUrl: `/issues/${issue.issueCode}`,
+              requireInteraction: true,
+              emailDetails: [
+                { label: "Software", value: issue.software.name },
+                { label: "Deadline", value: deadlineFormatted },
+                { label: "Time Remaining", value: "~10 Minutes" },
+              ],
+            });
+            sentCount++;
+          }
           remindersLogged.push(`10_MIN: ${issue.issueCode}`);
         }
       }
@@ -124,28 +137,29 @@ export async function GET(req: NextRequest) {
           await prisma.deadlineReminder.create({
             data: {
               issueId: issue.id,
-              developerId: issue.assignedDeveloperId,
+              developerId: allDevIds[0],
               reminderType: DeadlineReminderType.REMINDER_30_MIN,
             },
           });
 
-          await dispatchNotification({
-            userId: issue.assignedDeveloperId,
-            type: "DEADLINE_30_MIN",
-            title: `⚠️ Deadline Reminder: 30 Minutes — ${issue.issueCode}`,
-            message: `Issue ${issue.issueCode} is due in ~30 minutes (${deadlineFormatted}).`,
-            issueId: issue.id,
-            issueCode: issue.issueCode,
-            issueTitle: issue.title,
-            actionUrl: `/issues/${issue.issueCode}`,
-            emailDetails: [
-              { label: "Software", value: issue.software.name },
-              { label: "Deadline", value: deadlineFormatted },
-              { label: "Time Remaining", value: "~30 Minutes" },
-            ],
-          });
-
-          sentCount++;
+          for (const devId of allDevIds) {
+            await dispatchNotification({
+              userId: devId,
+              type: "DEADLINE_30_MIN",
+              title: `⚠️ Deadline Reminder: 30 Minutes — ${issue.issueCode}`,
+              message: `Issue ${issue.issueCode} is due in ~30 minutes (${deadlineFormatted}).`,
+              issueId: issue.id,
+              issueCode: issue.issueCode,
+              issueTitle: issue.title,
+              actionUrl: `/issues/${issue.issueCode}`,
+              emailDetails: [
+                { label: "Software", value: issue.software.name },
+                { label: "Deadline", value: deadlineFormatted },
+                { label: "Time Remaining", value: "~30 Minutes" },
+              ],
+            });
+            sentCount++;
+          }
           remindersLogged.push(`30_MIN: ${issue.issueCode}`);
         }
       }

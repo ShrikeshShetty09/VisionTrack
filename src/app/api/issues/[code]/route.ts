@@ -31,6 +31,9 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
         assignedDeveloper: {
           select: { id: true, name: true, email: true, role: true, profileImage: true },
         },
+        assignees: {
+          select: { id: true, name: true, email: true, role: true, profileImage: true },
+        },
         resolutions: {
           orderBy: { createdAt: "desc" },
           include: {
@@ -111,6 +114,7 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         software: true,
         createdBy: true,
         assignedDeveloper: true,
+        assignees: true,
       },
     });
 
@@ -118,27 +122,42 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
       return NextResponse.json({ error: "Issue not found." }, { status: 404 });
     }
 
-    const isAssignedDev = issue.assignedDeveloperId === user.id;
+    const isAssignedDev = issue.assignedDeveloperId === user.id || issue.assignees?.some((a) => a.id === user.id);
     const isCreator = issue.createdById === user.id;
 
-    // ACTION 1: ASSIGN DEVELOPER & DEADLINE
+    // ACTION 1: ASSIGN DEVELOPER & DEADLINE (Supports single or multiple users)
     if (action === "ASSIGN_DEVELOPER") {
       if (user.role !== "TESTER" && user.role !== "ADMIN") {
         return NextResponse.json({ error: "Only Testers and Admins can assign issues." }, { status: 403 });
       }
 
-      const { developerId, deadlineDate, deadlineTime, deadlineTimestamp: clientDeadlineTimestamp, notes } = body;
-      if (!developerId) {
-        return NextResponse.json({ error: "Please select a developer." }, { status: 400 });
+      const { developerId, developerIds, assignedUserIds, deadlineDate, deadlineTime, deadlineTimestamp: clientDeadlineTimestamp, notes } = body;
+      
+      const rawDevIds: string[] = Array.isArray(developerIds)
+        ? developerIds.filter(Boolean)
+        : Array.isArray(assignedUserIds)
+        ? assignedUserIds.filter(Boolean)
+        : developerId
+        ? [developerId]
+        : [];
+      const selectedDevIds = Array.from(new Set(rawDevIds));
+
+      if (selectedDevIds.length === 0) {
+        return NextResponse.json({ error: "Please select at least one user to assign." }, { status: 400 });
       }
 
-      const dev = await prisma.user.findUnique({
-        where: { id: developerId },
+      const devs = await prisma.user.findMany({
+        where: {
+          id: { in: selectedDevIds },
+          isActive: true,
+        },
       });
 
-      if (!dev || !dev.isActive || dev.role !== "DEVELOPER") {
-        return NextResponse.json({ error: "Selected developer is inactive or invalid." }, { status: 400 });
+      if (devs.length === 0) {
+        return NextResponse.json({ error: "Selected user(s) are inactive or invalid." }, { status: 400 });
       }
+
+      const primaryDev = devs[0];
 
       // Compute deadline timestamp accurately
       let deadlineTimestamp: Date | null = null;
@@ -156,28 +175,34 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
       const updatedIssue = await prisma.issue.update({
         where: { id: issue.id },
         data: {
-          assignedDeveloperId: dev.id,
+          assignedDeveloperId: primaryDev.id,
+          assignees: {
+            set: devs.map((d) => ({ id: d.id })),
+          },
           status: newStatus,
           deadlineDate: deadlineTimestamp,
           deadlineTime: deadlineTime || null,
           deadlineTimestamp: deadlineTimestamp,
           isOverdue: deadlineTimestamp ? deadlineTimestamp.getTime() < Date.now() : false,
         },
-        include: { assignedDeveloper: true, software: true },
+        include: { assignedDeveloper: true, assignees: true, software: true },
       });
 
-      // Assignment record
-      await prisma.issueAssignment.create({
-        data: {
-          issueId: issue.id,
-          developerId: dev.id,
-          assignedById: user.id,
-          deadline: deadlineTimestamp,
-          notes: notes || null,
-        },
-      });
+      // Assignment records for all assignees
+      for (const dev of devs) {
+        await prisma.issueAssignment.create({
+          data: {
+            issueId: issue.id,
+            developerId: dev.id,
+            assignedById: user.id,
+            deadline: deadlineTimestamp,
+            notes: notes || null,
+          },
+        });
+      }
 
       // Status history if changed
+      const devNames = devs.map((d) => d.name).join(", ");
       if (prevStatus !== newStatus) {
         await prisma.issueStatusHistory.create({
           data: {
@@ -185,7 +210,7 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
             changedById: user.id,
             fromStatus: prevStatus,
             toStatus: newStatus,
-            reason: `Assigned to ${dev.name}`,
+            reason: `Assigned to ${devNames}`,
           },
         });
       }
@@ -196,8 +221,17 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         action: "ISSUE_ASSIGNED",
         entityType: "Issue",
         entityId: issue.id,
-        oldValue: { assignedDeveloperId: prevDevId, deadlineTimestamp: issue.deadlineTimestamp },
-        newValue: { assignedDeveloperId: dev.id, deadlineTimestamp, status: newStatus },
+        oldValue: {
+          assignedDeveloperId: prevDevId,
+          assigneeIds: issue.assignees?.map((a) => a.id) || [],
+          deadlineTimestamp: issue.deadlineTimestamp,
+        },
+        newValue: {
+          assignedDeveloperId: primaryDev.id,
+          assigneeIds: devs.map((d) => d.id),
+          deadlineTimestamp,
+          status: newStatus,
+        },
         ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
       });
 
@@ -205,28 +239,30 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         ? deadlineTimestamp.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })
         : "No deadline set";
 
-      // Push notification & email to Developer
-      await dispatchNotification({
-        userId: dev.id,
-        type: "ISSUE_ASSIGNED",
-        title: `🔔 Issue Assigned — ${issue.issueCode}`,
-        message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
-        issueId: issue.id,
-        issueCode: issue.issueCode,
-        issueTitle: issue.title,
-        actionUrl: `/issues/${issue.issueCode}`,
-        emailDetails: [
-          { label: "Software", value: issue.software.name },
-          { label: "Priority", value: issue.priority },
-          { label: "Deadline", value: deadlineFormatted },
-          { label: "Assigned By", value: user.name },
-        ],
-      });
+      // Push notification & email to each assigned user
+      for (const dev of devs) {
+        await dispatchNotification({
+          userId: dev.id,
+          type: "ISSUE_ASSIGNED",
+          title: `🔔 Issue Assigned — ${issue.issueCode}`,
+          message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
+          issueId: issue.id,
+          issueCode: issue.issueCode,
+          issueTitle: issue.title,
+          actionUrl: `/issues/${issue.issueCode}`,
+          emailDetails: [
+            { label: "Software", value: issue.software.name },
+            { label: "Priority", value: issue.priority },
+            { label: "Deadline", value: deadlineFormatted },
+            { label: "Assigned By", value: user.name },
+          ],
+        });
+      }
 
       return NextResponse.json({
         success: true,
         issue: updatedIssue,
-        message: `Issue assigned to ${dev.name} successfully.`,
+        message: `Issue assigned to ${devNames} successfully.`,
       });
     }
 
@@ -476,10 +512,17 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         newValue: { result, testingNotes },
       });
 
-      // If test failed -> notify Developer & Admin
-      if (result === "FAIL" && issue.assignedDeveloperId) {
+      // If test failed -> notify all Developers & Admin
+      const notifyDevIdsOnFail = Array.from(
+        new Set([
+          issue.assignedDeveloperId,
+          ...(issue.assignees?.map((a: any) => a.id) || []),
+        ].filter(Boolean) as string[])
+      );
+
+      for (const devId of notifyDevIdsOnFail) {
         await dispatchNotification({
-          userId: issue.assignedDeveloperId,
+          userId: devId,
           type: "TEST_FAILED",
           title: `❌ Testing Failed — Issue Reopened: ${issue.issueCode}`,
           message: `QA Tester ${user.name} reported testing failure: "${testingNotes.substring(0, 100)}"`,
@@ -569,17 +612,26 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         newValue: { result, regressionNotes, status: nextStatus },
       });
 
-      if (result === "FAIL" && issue.assignedDeveloperId) {
-        await dispatchNotification({
-          userId: issue.assignedDeveloperId,
-          type: "REGRESSION_FAILED",
-          title: `⚠️ Regression Failed — Issue Reopened: ${issue.issueCode}`,
-          message: `Regression testing failed on ${issue.issueCode}. Please investigate.`,
-          issueId: issue.id,
-          issueCode: issue.issueCode,
-          issueTitle: issue.title,
-          actionUrl: `/issues/${issue.issueCode}`,
-        });
+      if (result === "FAIL") {
+        const notifyDevIdsOnRegressionFail = Array.from(
+          new Set([
+            issue.assignedDeveloperId,
+            ...(issue.assignees?.map((a: any) => a.id) || []),
+          ].filter(Boolean) as string[])
+        );
+
+        for (const devId of notifyDevIdsOnRegressionFail) {
+          await dispatchNotification({
+            userId: devId,
+            type: "REGRESSION_FAILED",
+            title: `⚠️ Regression Failed — Issue Reopened: ${issue.issueCode}`,
+            message: `Regression testing failed on ${issue.issueCode}. Please investigate.`,
+            issueId: issue.id,
+            issueCode: issue.issueCode,
+            issueTitle: issue.title,
+            actionUrl: `/issues/${issue.issueCode}`,
+          });
+        }
       }
 
       return NextResponse.json({
@@ -608,9 +660,19 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         },
       });
 
-      // Notify other participant (if tester commented -> notify dev, if dev commented -> notify tester)
-      const recipientId = user.id === issue.createdById ? issue.assignedDeveloperId : issue.createdById;
-      if (recipientId) {
+      // Notify participants: creator and all assignees (except commenter)
+      const assigneeIds = Array.from(
+        new Set([
+          issue.assignedDeveloperId,
+          ...(issue.assignees?.map((a: any) => a.id) || []),
+        ].filter(Boolean) as string[])
+      );
+
+      const recipientIds = Array.from(
+        new Set([issue.createdById, ...assigneeIds])
+      ).filter((id) => id !== user.id);
+
+      for (const recipientId of recipientIds) {
         await dispatchNotification({
           userId: recipientId,
           type: "COMMENT_ADDED",

@@ -86,11 +86,17 @@ export default function IssueDetailPage() {
     }
   };
 
+  const anyModalOpen = showAssignModal || showFixModal || showTestingModal || showRegressionModal;
+  const anyModalOpenRef = React.useRef(anyModalOpen);
+  anyModalOpenRef.current = anyModalOpen;
+
   useEffect(() => {
     fetchIssueDetail();
-    // 2.5-second live real-time sync loop for comments and statuses
+    // 2.5-second live real-time sync loop for comments and statuses (paused while modal is open)
     const interval = setInterval(() => {
-      fetchIssueDetail(true);
+      if (!anyModalOpenRef.current) {
+        fetchIssueDetail(true);
+      }
     }, 2500);
     return () => clearInterval(interval);
   }, [code]);
@@ -120,7 +126,9 @@ export default function IssueDetailPage() {
     );
   }
 
-  const isAssignedDev = user?.id === issue.assignedDeveloperId;
+  const isAssignedDev =
+    user?.id === issue.assignedDeveloperId ||
+    issue.assignees?.some((a: any) => a.id === user?.id);
   const isTester = user?.role === "TESTER" || user?.role === "ADMIN";
   const statusBadge = getStatusBadgeConfig(issue.status);
   const priorityBadge = getPriorityBadgeConfig(issue.priority);
@@ -274,7 +282,11 @@ export default function IssueDetailPage() {
               className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
             >
               <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
-              <span>{issue.assignedDeveloper ? "Reassign / Deadline" : "Assign Developer"}</span>
+              <span>
+                {(issue.assignees && issue.assignees.length > 0) || issue.assignedDeveloper
+                  ? "Reassign / Deadline"
+                  : "Assign Users"}
+              </span>
             </button>
           )}
 
@@ -833,24 +845,58 @@ export default function IssueDetailPage() {
               </div>
             </div>
 
-            {/* Assigned Developer */}
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800">
-              <div className="h-9 w-9 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                {issue.assignedDeveloper ? issue.assignedDeveloper.name.charAt(0) : "?"}
+            {/* Assigned Users / Developers */}
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                  Assigned Team ({issue.assignees?.length || (issue.assignedDeveloper ? 1 : 0)})
+                </span>
+                {isTester && (
+                  <button
+                    onClick={() => setShowAssignModal(true)}
+                    className="text-[11px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
-              <div className="min-w-0">
-                <span className="text-[10px] text-slate-400 uppercase font-bold block">Assigned Developer</span>
-                {issue.assignedDeveloper ? (
-                  <>
+
+              {issue.assignees && issue.assignees.length > 0 ? (
+                <div className="space-y-2">
+                  {issue.assignees.map((dev: any) => (
+                    <div key={dev.id} className="flex items-center gap-2.5">
+                      <div className="h-7 w-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        {dev.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
+                            {dev.name}
+                          </span>
+                          <span className="text-[9px] uppercase font-bold px-1.5 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                            {dev.role}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 truncate block">{dev.email}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : issue.assignedDeveloper ? (
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                    {issue.assignedDeveloper.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
                     <span className="text-xs font-bold text-slate-900 dark:text-white truncate block">
                       {issue.assignedDeveloper.name}
                     </span>
                     <span className="text-[10px] text-slate-500 truncate block">{issue.assignedDeveloper.email}</span>
-                  </>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">No developer assigned yet</span>
-                )}
-              </div>
+                  </div>
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400 italic block py-1">No user assigned yet</span>
+              )}
             </div>
 
             {/* Reopen Counter if > 0 */}
@@ -927,6 +973,11 @@ export default function IssueDetailPage() {
           issueCode={issue.issueCode}
           issueTitle={issue.title}
           currentDeveloperId={issue.assignedDeveloperId}
+          currentDeveloperIds={
+            issue.assignees && issue.assignees.length > 0
+              ? issue.assignees.map((a: any) => a.id)
+              : [issue.assignedDeveloperId].filter(Boolean)
+          }
           currentDeadlineDate={
             issue.deadlineTimestamp
               ? format(new Date(issue.deadlineTimestamp), "yyyy-MM-dd")
@@ -940,7 +991,7 @@ export default function IssueDetailPage() {
           }
           onAssigned={async () => {
             await fetchIssueDetail(true);
-            showToast("Developer assigned successfully!");
+            showToast("Assignees and deadline updated successfully!");
           }}
         />
       )}

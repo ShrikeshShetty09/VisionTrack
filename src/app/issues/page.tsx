@@ -406,7 +406,7 @@ function IssuesTableContent() {
                   <th className="py-3 px-4">Software</th>
                   <th className="py-3 px-4">Priority</th>
                   <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Developer</th>
+                  <th className="py-3 px-4">Assignee(s)</th>
                   <th className="py-3 px-4">Deadline</th>
                   <th className="py-3 px-4">Created</th>
                   <th className="py-3 px-4 text-right">Action</th>
@@ -454,7 +454,7 @@ function IssuesTableContent() {
 
                       {/* Priority */}
                       <td className="py-3.5 px-4">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold inline-block ${priorityBadge.bg}`}>
+                        <span className={`text-[10px] px-2.5 py-0.5 rounded-full border font-semibold inline-block ${priorityBadge.bg}`}>
                           {priorityBadge.indicator} {priorityBadge.label}
                         </span>
                       </td>
@@ -466,9 +466,26 @@ function IssuesTableContent() {
                         </span>
                       </td>
 
-                      {/* Developer */}
-                      <td className="py-3.5 px-4">
-                        {issue.assignedDeveloper ? (
+                      {/* Assignee(s) */}
+                      <td className="py-3.5 px-4 max-w-[160px]">
+                        {issue.assignees && issue.assignees.length > 0 ? (
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex -space-x-1.5 overflow-hidden shrink-0">
+                              {issue.assignees.slice(0, 3).map((a: any) => (
+                                <div
+                                  key={a.id}
+                                  title={`${a.name}`}
+                                  className="h-5 w-5 rounded-full bg-indigo-600 text-white font-bold text-[9px] flex items-center justify-center border-2 border-white dark:border-slate-900 shrink-0"
+                                >
+                                  {a.name.charAt(0)}
+                                </div>
+                              ))}
+                            </div>
+                            <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
+                              {issue.assignees.map((a: any) => a.name).join(", ")}
+                            </span>
+                          </div>
+                        ) : issue.assignedDeveloper ? (
                           <div className="flex items-center gap-1.5">
                             <div className="h-5 w-5 rounded-full bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
                               {issue.assignedDeveloper.name.charAt(0)}

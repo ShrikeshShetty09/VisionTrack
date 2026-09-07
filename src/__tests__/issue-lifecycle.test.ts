@@ -113,6 +113,31 @@ export function runLifecycleTests() {
   });
   assert("Admin CAN perform status overrides", adminOverride.allowed);
 
+  // 12. Multiple assignees: any assigned co-developer can advance issue to IN_PROGRESS and IN_REVIEW
+  const multiAssignees = [{ id: "dev-1", name: "Dev A" }, { id: "dev-2", name: "Dev B" }];
+  const currentDevUser = { id: "dev-2" };
+  const isAssigned = multiAssignees.some((a) => a.id === currentDevUser.id);
+
+  const coDevStart = validateStatusTransition({
+    currentStatus: "ASSIGNED",
+    targetStatus: "IN_PROGRESS",
+    userRole: "DEVELOPER",
+    isAssignedDeveloper: isAssigned,
+  });
+  assert("Co-assigned developer in multi-assignee team CAN transition ASSIGNED -> IN_PROGRESS", coDevStart.allowed);
+
+  // 13. Non-assigned developer CANNOT transition a multi-assigned issue
+  const nonAssignedUser = { id: "dev-3" };
+  const isNonAssigned = multiAssignees.some((a) => a.id === nonAssignedUser.id);
+
+  const nonAssignedAttempt = validateStatusTransition({
+    currentStatus: "ASSIGNED",
+    targetStatus: "IN_PROGRESS",
+    userRole: "DEVELOPER",
+    isAssignedDeveloper: isNonAssigned,
+  });
+  assert("Unassigned third developer CANNOT transition multi-assigned issue", !nonAssignedAttempt.allowed);
+
   console.log(`\nLifecycle Test Summary: ${passed} passed, ${failed} failed.\n`);
   return failed === 0;
 }

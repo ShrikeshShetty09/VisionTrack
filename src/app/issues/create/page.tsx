@@ -17,6 +17,9 @@ import {
   Loader2,
   AlertTriangle,
   Paperclip,
+  Search,
+  Check,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Priority, Environment } from "@/types";
@@ -33,14 +36,15 @@ export default function CreateIssuePage() {
   const [priority, setPriority] = useState<Priority>("HIGH");
   const [jobUrl, setJobUrl] = useState("");
 
-  // Direct assignment
-  const [assignedDeveloperId, setAssignedDeveloperId] = useState("");
+  // Direct assignment (single or multiple users)
+  const [assignedDeveloperIds, setAssignedDeveloperIds] = useState<string[]>([]);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
   const [deadlineDate, setDeadlineDate] = useState("");
   const [deadlineTime, setDeadlineTime] = useState("18:30");
 
   // Auxiliary data
   const [softwareList, setSoftwareList] = useState<any[]>([]);
-  const [developers, setDevelopers] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,9 +53,10 @@ export default function CreateIssuePage() {
   useEffect(() => {
     const fetchFormData = async () => {
       try {
-        const [swRes, devRes] = await Promise.all([
+        const [swRes, devRes, usersRes] = await Promise.all([
           fetch("/api/software"),
           fetch("/api/analytics?timeRange=all"),
+          fetch("/api/users?activeOnly=true"),
         ]);
         if (swRes.ok) {
           const swData = await swRes.json();
@@ -60,9 +65,34 @@ export default function CreateIssuePage() {
             setSoftwareId(swData.software[0].id);
           }
         }
+
+        let devWorkloads: Record<string, any> = {};
         if (devRes.ok) {
           const dData = await devRes.json();
-          setDevelopers(dData.developerWorkload || []);
+          (dData.developerWorkload || []).forEach((w: any) => {
+            devWorkloads[w.id] = w;
+          });
+        }
+
+        if (usersRes.ok) {
+          const uData = await usersRes.json();
+          const merged = (uData.users || []).map((u: any) => {
+            const wl = devWorkloads[u.id];
+            return {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              activeIssuesCount: wl?.activeIssuesCount ?? 0,
+              overdueCount: wl?.overdueCount ?? 0,
+              urgentUpcomingDeadlines: wl?.urgentUpcomingDeadlines ?? 0,
+              availability: wl?.availability ?? (u.role === "DEVELOPER" ? "AVAILABLE" : "N/A"),
+            };
+          });
+          setAvailableUsers(merged);
+        } else if (devRes.ok) {
+          const dData = await devRes.json();
+          setAvailableUsers(dData.developerWorkload || []);
         }
       } catch (err) {
         console.error(err);
@@ -72,7 +102,10 @@ export default function CreateIssuePage() {
   }, []);
 
   const selectedSoftware = softwareList.find((s) => s.id === softwareId);
-  const selectedDev = developers.find((d) => d.id === assignedDeveloperId);
+  const selectedUsersList = availableUsers.filter((u) => assignedDeveloperIds.includes(u.id));
+  const busySelectedUsers = selectedUsersList.filter(
+    (u) => u.activeIssuesCount >= 5 || u.urgentUpcomingDeadlines >= 2 || u.overdueCount >= 2
+  );
 
   const uploadFileList = async (files: File[]) => {
     if (!files || files.length === 0) return;
@@ -179,7 +212,8 @@ export default function CreateIssuePage() {
           environment,
           priority,
           jobUrl,
-          assignedDeveloperId: assignedDeveloperId || null,
+          assignedDeveloperIds,
+          assignedDeveloperId: assignedDeveloperIds[0] || null,
           deadlineDate: deadlineDate || null,
           deadlineTime: deadlineTime || null,
           deadlineTimestamp,
@@ -455,31 +489,128 @@ export default function CreateIssuePage() {
           </div>
         </div>
 
-        {/* Developer Assignment & Deadline Section */}
+        {/* User Assignment & Deadline Section */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800">
-            2. Developer Assignment & Deadline (Optional Direct Assignment)
-          </h2>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+              2. Assignee Selection & Deadline (Single or Multiple Assignees)
+            </h2>
+            <span className="text-xs text-slate-500">
+              {assignedDeveloperIds.length} selected
+            </span>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-1">
-              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                Assign Developer
-              </label>
-              <select
-                value={assignedDeveloperId}
-                onChange={(e) => setAssignedDeveloperId(e.target.value)}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">-- Assign Later (Unassigned) --</option>
-                {developers.map((dev) => (
-                  <option key={dev.id} value={dev.id}>
-                    {dev.name} ({dev.activeIssuesCount} active, {dev.availability})
-                  </option>
-                ))}
-              </select>
+          {/* Selected Users Chips */}
+          {selectedUsersList.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-100/70 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/60">
+              {selectedUsersList.map((u) => (
+                <span
+                  key={u.id}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 shadow-xs"
+                >
+                  <span>{u.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAssignedDeveloperIds((prev) => prev.filter((id) => id !== u.id))}
+                    className="text-slate-400 hover:text-red-500 rounded-sm p-0.5 transition"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Search and User List */}
+          <div className="space-y-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search assignees by name, email, or role..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                className="w-full text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+              />
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto border border-slate-200 dark:border-slate-800 rounded-xl p-2 bg-slate-50/50 dark:bg-slate-950/50">
+              {availableUsers
+                .filter((u) => {
+                  if (!userSearchQuery) return true;
+                  const q = userSearchQuery.toLowerCase();
+                  return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.toLowerCase().includes(q);
+                })
+                .map((dev) => {
+                  const isSelected = assignedDeveloperIds.includes(dev.id);
+                  const isBusy = dev.availability === "BUSY";
+                  const isModerate = dev.availability === "MODERATE";
+
+                  return (
+                    <div
+                      key={dev.id}
+                      onClick={() => {
+                        setAssignedDeveloperIds((prev) =>
+                          isSelected ? prev.filter((id) => id !== dev.id) : [...prev, dev.id]
+                        );
+                      }}
+                      className={`p-2.5 rounded-lg border cursor-pointer transition flex items-center justify-between gap-2 text-xs ${
+                        isSelected
+                          ? "bg-blue-500/10 border-blue-500 ring-1 ring-blue-500 text-blue-900 dark:text-blue-200"
+                          : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`h-4 w-4 rounded flex items-center justify-center border transition shrink-0 ${
+                            isSelected
+                              ? "bg-blue-600 border-blue-600 text-white"
+                              : "border-slate-300 dark:border-slate-700"
+                          }`}
+                        >
+                          {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                        </div>
+
+                        <div className="truncate">
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-slate-900 dark:text-white truncate">
+                              {dev.name}
+                            </span>
+                            <span className="text-[9px] uppercase font-bold px-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                              {dev.role}
+                            </span>
+                          </div>
+                          <span className="text-slate-400 text-[10px] block truncate">{dev.email}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0 text-right">
+                        {dev.role === "DEVELOPER" && (
+                          <span className="text-[10px] text-slate-500">{dev.activeIssuesCount} active</span>
+                        )}
+                        {dev.availability !== "N/A" && (
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full border ${
+                              isBusy
+                                ? "bg-red-500/10 text-red-600 border-red-200 dark:border-red-900/40"
+                                : isModerate
+                                ? "bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-900/40"
+                                : "bg-emerald-500/10 text-emerald-600 border-emerald-200 dark:border-emerald-900/40"
+                            }`}
+                          >
+                            {dev.availability}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+
+          {/* Deadline Date & Time Inputs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
             <div>
               <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
                 Deadline Date
@@ -488,7 +619,7 @@ export default function CreateIssuePage() {
                 type="date"
                 value={deadlineDate}
                 onChange={(e) => setDeadlineDate(e.target.value)}
-                disabled={!assignedDeveloperId}
+                disabled={assignedDeveloperIds.length === 0}
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
               />
             </div>
@@ -501,17 +632,17 @@ export default function CreateIssuePage() {
                 type="time"
                 value={deadlineTime}
                 onChange={(e) => setDeadlineTime(e.target.value)}
-                disabled={!assignedDeveloperId}
+                disabled={assignedDeveloperIds.length === 0}
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
               />
             </div>
           </div>
 
-          {selectedDev && selectedDev.availability === "BUSY" && (
+          {busySelectedUsers.length > 0 && (
             <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
               <span>
-                <strong>Workload Notice:</strong> {selectedDev.name} currently has {selectedDev.activeIssuesCount} active issues.
+                <strong>Workload Notice:</strong> {busySelectedUsers.map((u) => `${u.name} (${u.activeIssuesCount} active)`).join(", ")} currently have high workloads.
               </span>
             </div>
           )}

@@ -37,7 +37,10 @@ export async function GET(req: NextRequest) {
     // Role-specific scoping when requested
     if (myIssuesOnly) {
       if (user.role === "DEVELOPER") {
-        where.assignedDeveloperId = user.id;
+        where.OR = [
+          { assignedDeveloperId: user.id },
+          { assignees: { some: { id: user.id } } },
+        ];
       } else if (user.role === "TESTER") {
         where.createdById = user.id;
       }
@@ -48,7 +51,17 @@ export async function GET(req: NextRequest) {
     if (environment) where.environment = environment;
     if (softwareId) where.softwareId = softwareId;
     if (moduleId) where.moduleId = moduleId;
-    if (developerId) where.assignedDeveloperId = developerId;
+    if (developerId) {
+      where.AND = [
+        ...(where.AND || []),
+        {
+          OR: [
+            { assignedDeveloperId: developerId },
+            { assignees: { some: { id: developerId } } },
+          ],
+        },
+      ];
+    }
     if (testerId) where.createdById = testerId;
 
     if (overdueOnly) {
@@ -66,6 +79,7 @@ export async function GET(req: NextRequest) {
         { module: { name: { contains: search, mode: "insensitive" } } },
         { createdBy: { name: { contains: search, mode: "insensitive" } } },
         { assignedDeveloper: { name: { contains: search, mode: "insensitive" } } },
+        { assignees: { some: { name: { contains: search, mode: "insensitive" } } } },
       ];
     }
 
@@ -85,8 +99,9 @@ export async function GET(req: NextRequest) {
       include: {
         software: { select: { id: true, name: true, code: true } },
         module: { select: { id: true, name: true } },
-        createdBy: { select: { id: true, name: true, email: true, role: true } },
-        assignedDeveloper: { select: { id: true, name: true, email: true, role: true } },
+        createdBy: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+        assignedDeveloper: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+        assignees: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
         resolutions: {
           take: 1,
           orderBy: { createdAt: "desc" },
@@ -208,7 +223,17 @@ export async function POST(req: NextRequest) {
       resolvedPriority = prioUpper as Priority;
     }
 
-    const initialStatus: IssueStatus = assignedDeveloperId ? "ASSIGNED" : "NEW";
+    const rawDevIds: string[] = Array.isArray(body.assignedDeveloperIds)
+      ? body.assignedDeveloperIds.filter(Boolean)
+      : Array.isArray(body.assignedUserIds)
+      ? body.assignedUserIds.filter(Boolean)
+      : assignedDeveloperId
+      ? [assignedDeveloperId]
+      : [];
+    const assignedDevIds = Array.from(new Set(rawDevIds));
+    const primaryDevId = assignedDevIds[0] || null;
+
+    const initialStatus: IssueStatus = assignedDevIds.length > 0 ? "ASSIGNED" : "NEW";
 
     const issue = await prisma.issue.create({
       data: {
@@ -222,7 +247,10 @@ export async function POST(req: NextRequest) {
         status: initialStatus,
         jobUrl: jobUrl?.trim() || null,
         createdById: user.id,
-        assignedDeveloperId: assignedDeveloperId || null,
+        assignedDeveloperId: primaryDevId,
+        assignees: assignedDevIds.length > 0
+          ? { connect: assignedDevIds.map((id) => ({ id })) }
+          : undefined,
         deadlineDate: deadlineTimestamp,
         deadlineTime: deadlineTime || null,      // e.g. "18:30"
         deadlineTimestamp: deadlineTimestamp,    // full timestamp for alerts
@@ -241,6 +269,7 @@ export async function POST(req: NextRequest) {
         module: true,
         createdBy: true,
         assignedDeveloper: true,
+        assignees: true,
         attachments: true,
       },
     });
@@ -252,7 +281,9 @@ export async function POST(req: NextRequest) {
         changedById: user.id,
         fromStatus: "NEW",
         toStatus: initialStatus,
-        reason: assignedDeveloperId ? "Issue created and directly assigned to developer" : "Issue created by QA tester",
+        reason: assignedDevIds.length > 0
+          ? `Issue created and directly assigned to ${assignedDevIds.length} user(s)`
+          : "Issue created by QA tester",
       },
     });
 
@@ -266,44 +297,47 @@ export async function POST(req: NextRequest) {
         issueCode: issue.issueCode,
         title: issue.title,
         priority: issue.priority,
-        assignedDeveloperId: issue.assignedDeveloperId,
+        assignedDeveloperId: primaryDevId,
+        assignedUserIds: assignedDevIds,
         deadlineTimestamp,
       },
       ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
     });
 
-    // If developer assigned, create assignment record & send push notification
-    if (assignedDeveloperId) {
-      await prisma.issueAssignment.create({
-        data: {
-          issueId: issue.id,
-          developerId: assignedDeveloperId,
-          assignedById: user.id,
-          deadline: deadlineTimestamp,
-          notes: "Assigned during issue creation",
-        },
-      });
-
+    // If developers assigned, create assignment records & send push notifications
+    if (assignedDevIds.length > 0) {
       const deadlineFormatted = deadlineTimestamp
         ? deadlineTimestamp.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })
         : "No deadline specified";
 
-      await dispatchNotification({
-        userId: assignedDeveloperId,
-        type: "ISSUE_ASSIGNED",
-        title: `🔔 New Issue Assigned — ${issue.issueCode}`,
-        message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
-        issueId: issue.id,
-        issueCode: issue.issueCode,
-        issueTitle: issue.title,
-        actionUrl: `/issues/${issue.issueCode}`,
-        emailDetails: [
-          { label: "Software", value: issue.software.name },
-          { label: "Priority", value: issue.priority },
-          { label: "Deadline", value: deadlineFormatted },
-          { label: "Reported By", value: user.name },
-        ],
-      });
+      for (const devId of assignedDevIds) {
+        await prisma.issueAssignment.create({
+          data: {
+            issueId: issue.id,
+            developerId: devId,
+            assignedById: user.id,
+            deadline: deadlineTimestamp,
+            notes: "Assigned during issue creation",
+          },
+        });
+
+        await dispatchNotification({
+          userId: devId,
+          type: "ISSUE_ASSIGNED",
+          title: `🔔 New Issue Assigned — ${issue.issueCode}`,
+          message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
+          issueId: issue.id,
+          issueCode: issue.issueCode,
+          issueTitle: issue.title,
+          actionUrl: `/issues/${issue.issueCode}`,
+          emailDetails: [
+            { label: "Software", value: issue.software.name },
+            { label: "Priority", value: issue.priority },
+            { label: "Deadline", value: deadlineFormatted },
+            { label: "Reported By", value: user.name },
+          ],
+        });
+      }
     }
 
     return NextResponse.json({

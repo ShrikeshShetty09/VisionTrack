@@ -89,6 +89,7 @@ model User {
   // Relationships
   createdIssues         Issue[]                @relation("IssueCreatedBy")
   assignedIssues        Issue[]                @relation("IssueAssignedDeveloper")
+  assignedIssuesMany    Issue[]                @relation("IssueAssignees")
   assignedRecords       IssueAssignment[]      @relation("AssignmentDeveloper")
   givenAssignments      IssueAssignment[]      @relation("AssignmentBy")
   statusChanges         IssueStatusHistory[]   @relation("StatusChangedBy")
@@ -164,6 +165,7 @@ model Issue {
   module              Module?              @relation(fields: [moduleId], references: [id])
   createdBy           User                 @relation("IssueCreatedBy", fields: [createdById], references: [id])
   assignedDeveloper   User?                @relation("IssueAssignedDeveloper", fields: [assignedDeveloperId], references: [id])
+  assignees           User[]               @relation("IssueAssignees")
   
   assignments         IssueAssignment[]
   statusHistory       IssueStatusHistory[]

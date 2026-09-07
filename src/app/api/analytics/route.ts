@@ -131,11 +131,30 @@ export async function GET(req: NextRequest) {
             updatedAt: true,
           },
         },
+        assignedIssuesMany: {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            status: true,
+            isOverdue: true,
+            deadlineTimestamp: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
 
     const developerWorkload = developers.map((dev) => {
-      const issues = dev.assignedIssues;
+      // Deduplicate issues between primary assignment and multi-assignment
+      const issueMap = new Map<string, any>();
+      for (const i of dev.assignedIssues) {
+        issueMap.set(i.id, i);
+      }
+      for (const i of dev.assignedIssuesMany) {
+        issueMap.set(i.id, i);
+      }
+      const issues = Array.from(issueMap.values());
       const active = issues.filter((i) => i.status !== "RESOLVED").length;
       const inProg = issues.filter((i) => i.status === "IN_PROGRESS").length;
       const inRev = issues.filter((i) => i.status === "IN_REVIEW").length;

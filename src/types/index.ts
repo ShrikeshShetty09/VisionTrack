@@ -46,6 +46,14 @@ export interface UserSession {
   isActive: boolean;
 }
 
+export interface IssueAssigneeUser {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  profileImage?: string | null;
+}
+
 export interface IssueListItem {
   id: string;
   issueCode: string;
@@ -64,6 +72,7 @@ export interface IssueListItem {
   createdByName: string;
   assignedDeveloperId?: string | null;
   assignedDeveloperName?: string | null;
+  assignees?: IssueAssigneeUser[];
   deadlineDate?: string | null;
   deadlineTime?: string | null;
   deadlineTimestamp?: string | null;
