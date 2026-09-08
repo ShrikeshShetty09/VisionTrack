@@ -13,7 +13,7 @@ interface CacheEntry {
 const userNotificationCache = new Map<string, CacheEntry>();
 const CACHE_TTL_MS = 15000; // 15 seconds cache window
 
-export function invalidateNotificationCache(userId?: string) {
+function invalidateNotificationCache(userId?: string) {
   if (userId) {
     userNotificationCache.delete(userId);
   } else {
