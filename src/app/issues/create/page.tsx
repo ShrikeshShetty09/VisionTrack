@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { Priority, Environment } from "@/types";
+import { triggerActionUpdate } from "@/lib/events";
 
 export default function CreateIssuePage() {
   const { user } = useAuth();
@@ -226,6 +227,7 @@ export default function CreateIssuePage() {
         throw new Error(data.error || "Failed to create issue");
       }
 
+      triggerActionUpdate();
       router.push(`/issues/${data.issue.issueCode}`);
     } catch (err: any) {
       setError(err.message || "Failed to create issue");

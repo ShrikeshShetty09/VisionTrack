@@ -23,8 +23,12 @@ export function PushNotificationManager() {
   const [loading, setLoading] = useState<boolean>(false);
   const [statusMessage, setStatusMessage] = useState<string>("");
 
+  const syncedRef = React.useRef(false);
+
   // Helper to save subscription to database
   const syncSubscriptionWithBackend = async (sub: PushSubscription) => {
+    if (syncedRef.current) return;
+    syncedRef.current = true;
     try {
       await fetch("/api/push/subscribe", {
         method: "POST",
@@ -67,14 +71,10 @@ export function PushNotificationManager() {
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
           setIsSubscribed(true);
-          // Always sync subscription to backend; if the backend had the entry deleted,
-          // this re-registers it for the current user session
           await syncSubscriptionWithBackend(sub);
         } else if (Notification.permission === "granted") {
-          // Permission already granted but no subscription — auto-create one silently
           await autoSubscribe(reg);
         } else if (Notification.permission === "default") {
-          // Show opt-in banner if not dismissed yet
           const dismissed = sessionStorage.getItem("vt-push-banner-dismissed");
           if (!dismissed) {
             setShowBanner(true);
@@ -84,7 +84,7 @@ export function PushNotificationManager() {
       .catch((err) => {
         console.warn("[ServiceWorker Registration Error]:", err);
       });
-  }, [user]);
+  }, [user?.id]);
 
   const requestSubscription = async () => {
     try {

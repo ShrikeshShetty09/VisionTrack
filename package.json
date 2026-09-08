@@ -11,7 +11,9 @@
     "test": "tsx scripts/test-runner.ts",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:export": "tsx scripts/db-export.ts",
+    "db:import": "tsx scripts/db-import.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

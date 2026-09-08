@@ -44,20 +44,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   const fullUrl = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
 
-  // Background deadline worker poll (every 60 seconds)
-  useEffect(() => {
-    if (!user) return;
-    const runDeadlineCheck = async () => {
-      try {
-        await fetch("/api/cron/deadlines");
-      } catch (err) {
-        // silent
-      }
-    };
-    runDeadlineCheck();
-    const interval = setInterval(runDeadlineCheck, 60000);
-    return () => clearInterval(interval);
-  }, [user]);
 
   // Handle route protection
   useEffect(() => {

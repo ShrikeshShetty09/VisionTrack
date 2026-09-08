@@ -121,11 +121,13 @@ function IssuesTableContent() {
 
   useEffect(() => {
     fetchIssues();
-    // Silent periodic refresh every 10s for issues list
-    const interval = setInterval(() => {
-      fetchIssues(true);
-    }, 10000);
-    return () => clearInterval(interval);
+
+    // Re-fetch when an action is performed across the app
+    const handleAction = () => fetchIssues(true);
+    window.addEventListener("visiontrack:action", handleAction);
+    return () => {
+      window.removeEventListener("visiontrack:action", handleAction);
+    };
   }, [page, sortBy, sortOrder, status, priority, softwareId, moduleId, developerId, overdueOnly, myIssuesOnly]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {

@@ -53,17 +53,29 @@ export function NotificationBell() {
     }
   };
 
-  const fetchNotifications = async (isSubsequent = false) => {
+let globalLastNotificationFetchTime = 0;
+
+  const notificationsRef = useRef(notifications);
+  notificationsRef.current = notifications;
+
+  const fetchNotifications = async (force = false) => {
     if (!user) return;
+    const now = Date.now();
+    // Strict rate limiter: never allow requests closer than 10 seconds apart unless forced by user click
+    if (!force && now - globalLastNotificationFetchTime < 10000) {
+      return;
+    }
+    globalLastNotificationFetchTime = now;
+
     try {
       const res = await fetch("/api/notifications");
       if (res.ok) {
         const data = await res.json();
         const newNotifications: NotificationItem[] = data.notifications || [];
 
-        // If it's a subsequent poll, detect new unread messages and pop them up natively
-        if (isSubsequent && notifications.length > 0) {
-          const existingIds = new Set(notifications.map((n) => n.id));
+        // Check for new unread messages and pop them up natively
+        if (notificationsRef.current.length > 0) {
+          const existingIds = new Set(notificationsRef.current.map((n) => n.id));
           newNotifications.forEach((n) => {
             if (!n.isRead && !existingIds.has(n.id)) {
               showNativeNotification(n.title, n.message, n.issue?.issueCode);
@@ -80,12 +92,16 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    fetchNotifications(false);
-    const interval = setInterval(() => {
-      fetchNotifications(true);
-    }, 5000); // Poll more frequently (every 5 seconds) for real-time responsiveness
-    return () => clearInterval(interval);
-  }, [user, notifications]);
+    if (!user) return;
+    // Strictly do NOT fetch automatically on mount or navigation.
+    // Only listen for real user actions (e.g. creating/assigning an issue or commenting)
+    const handleAction = () => fetchNotifications(true);
+    window.addEventListener("visiontrack:action", handleAction);
+
+    return () => {
+      window.removeEventListener("visiontrack:action", handleAction);
+    };
+  }, [user?.id]);
 
   // Click outside to close
   useEffect(() => {
@@ -162,7 +178,7 @@ export function NotificationBell() {
       <button
         onClick={() => {
           setOpen(!open);
-          if (!open) fetchNotifications();
+          if (!open) fetchNotifications(true);
         }}
         className="relative p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition"
         aria-label="View notifications"

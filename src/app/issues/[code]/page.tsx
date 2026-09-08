@@ -36,6 +36,7 @@ import { TesterTestingModal } from "@/components/issues/TesterTestingModal";
 import { TesterRegressionModal } from "@/components/issues/TesterRegressionModal";
 import { AssignDeveloperModal } from "@/components/issues/AssignDeveloperModal";
 import { IssueTimeline } from "@/components/issues/IssueTimeline";
+import { triggerActionUpdate } from "@/lib/events";
 
 export default function IssueDetailPage() {
   const { code } = useParams();
@@ -92,13 +93,17 @@ export default function IssueDetailPage() {
 
   useEffect(() => {
     fetchIssueDetail();
-    // 2.5-second live real-time sync loop for comments and statuses (paused while modal is open)
-    const interval = setInterval(() => {
+
+    // Refresh when an action occurs (comment, status change, assignment)
+    const handleAction = () => {
       if (!anyModalOpenRef.current) {
         fetchIssueDetail(true);
       }
-    }, 2500);
-    return () => clearInterval(interval);
+    };
+    window.addEventListener("visiontrack:action", handleAction);
+    return () => {
+      window.removeEventListener("visiontrack:action", handleAction);
+    };
   }, [code]);
 
   if (loading) {
@@ -163,6 +168,7 @@ export default function IssueDetailPage() {
       }
 
       await fetchIssueDetail(true);
+      triggerActionUpdate();
     } catch (err: any) {
       // Revert on failure
       setIssue((prev: any) => prev ? { ...prev, status: originalStatus } : null);
@@ -190,6 +196,7 @@ export default function IssueDetailPage() {
       }
 
       await fetchIssueDetail(true);
+      triggerActionUpdate();
     } catch (err: any) {
       // Revert on failure
       setIssue((prev: any) => prev ? { ...prev, status: originalStatus } : null);
@@ -235,6 +242,7 @@ export default function IssueDetailPage() {
 
       if (res.ok) {
         await fetchIssueDetail(true);
+        triggerActionUpdate();
       }
     } catch (err) {
       console.error(err);
@@ -935,6 +943,7 @@ export default function IssueDetailPage() {
           issueTitle={issue.title}
           onFixSubmitted={async () => {
             await fetchIssueDetail(true);
+            triggerActionUpdate();
             showToast("Issue marked as FIXED successfully!");
           }}
         />
@@ -948,6 +957,7 @@ export default function IssueDetailPage() {
           issueTitle={issue.title}
           onTestingSubmitted={async () => {
             await fetchIssueDetail(true);
+            triggerActionUpdate();
             showToast("Testing verdict submitted successfully!");
           }}
         />
@@ -961,6 +971,7 @@ export default function IssueDetailPage() {
           issueTitle={issue.title}
           onRegressionSubmitted={async () => {
             await fetchIssueDetail(true);
+            triggerActionUpdate();
             showToast("Regression testing completed successfully!");
           }}
         />
@@ -991,6 +1002,7 @@ export default function IssueDetailPage() {
           }
           onAssigned={async () => {
             await fetchIssueDetail(true);
+            triggerActionUpdate();
             showToast("Assignees and deadline updated successfully!");
           }}
         />
