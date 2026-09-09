@@ -83,8 +83,6 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const total = await prisma.issue.count({ where });
-
     const orderBy: any = {};
     if (sortBy === "deadline") {
       orderBy.deadlineTimestamp = sortOrder;
@@ -94,40 +92,43 @@ export async function GET(req: NextRequest) {
       orderBy.createdAt = sortOrder;
     }
 
-    const issues = await prisma.issue.findMany({
-      where,
-      include: {
-        software: { select: { id: true, name: true, code: true } },
-        module: { select: { id: true, name: true } },
-        createdBy: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
-        assignedDeveloper: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
-        assignees: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
-        resolutions: {
-          take: 1,
-          orderBy: { createdAt: "desc" },
-          select: { id: true, resolutionText: true, rootCause: true, createdAt: true },
-        },
-        testingRecords: {
-          take: 1,
-          orderBy: { testedAt: "desc" },
-          select: { id: true, result: true, testingNotes: true, testedAt: true },
-        },
-        regressionRecords: {
-          take: 1,
-          orderBy: { testedAt: "desc" },
-          select: { id: true, result: true, regressionNotes: true, testedAt: true },
-        },
-        _count: {
-          select: {
-            comments: true,
-            attachments: true,
+    const [total, issues] = await Promise.all([
+      prisma.issue.count({ where }),
+      prisma.issue.findMany({
+        where,
+        include: {
+          software: { select: { id: true, name: true, code: true } },
+          module: { select: { id: true, name: true } },
+          createdBy: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+          assignedDeveloper: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+          assignees: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+          resolutions: {
+            take: 1,
+            orderBy: { createdAt: "desc" },
+            select: { id: true, resolutionText: true, rootCause: true, createdAt: true },
+          },
+          testingRecords: {
+            take: 1,
+            orderBy: { testedAt: "desc" },
+            select: { id: true, result: true, testingNotes: true, testedAt: true },
+          },
+          regressionRecords: {
+            take: 1,
+            orderBy: { testedAt: "desc" },
+            select: { id: true, result: true, regressionNotes: true, testedAt: true },
+          },
+          _count: {
+            select: {
+              comments: true,
+              attachments: true,
+            },
           },
         },
-      },
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy,
-    });
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy,
+      }),
+    ]);
 
     return NextResponse.json({
       issues,

@@ -44,12 +44,15 @@ export default function DashboardPage() {
   const [recentIssues, setRecentIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState<string | null>(null);
+
   // Fix modal state for developers
   const [selectedFixIssue, setSelectedFixIssue] = useState<any>(null);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [analyticsRes, issuesRes] = await Promise.all([
         fetch(`/api/analytics?timeRange=${timeRange}`),
         fetch(`/api/issues?limit=8&myIssues=${user?.role === "DEVELOPER" ? "true" : "false"}`),
@@ -58,13 +61,16 @@ export default function DashboardPage() {
       if (analyticsRes.ok) {
         const aData = await analyticsRes.json();
         setAnalytics(aData);
+      } else {
+        throw new Error("Unable to load live quality metrics from server. Please retry.");
       }
       if (issuesRes.ok) {
         const iData = await issuesRes.json();
         setRecentIssues(iData.issues || []);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("[Dashboard Fetch Error]:", err);
+      setError(err?.message || "Failed to load dashboard metrics");
     } finally {
       setLoading(false);
     }
@@ -76,13 +82,33 @@ export default function DashboardPage() {
     }
   }, [user, timeRange]);
 
-  if (loading || !analytics) {
+  if (loading && !analytics) {
     return (
       <div className="py-12 flex flex-col items-center justify-center space-y-3">
         <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
         <p className="text-xs font-medium text-slate-500">Loading live quality metrics...</p>
       </div>
     );
+  }
+
+  if (error && !analytics) {
+    return (
+      <div className="py-16 text-center space-y-3 px-4 max-w-md mx-auto">
+        <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto" />
+        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Unable to load dashboard</h3>
+        <p className="text-xs text-slate-500">{error}</p>
+        <button
+          onClick={() => fetchDashboardData()}
+          className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition shadow-sm"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return null;
   }
 
   const { summary } = analytics;

@@ -34,6 +34,7 @@ function ReportsContent() {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Synchronize activeTab when query string changes (e.g. from sidebar navigation)
   useEffect(() => {
@@ -48,31 +49,56 @@ function ReportsContent() {
     router.push(`/reports?tab=${tabId}`);
   };
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch("/api/analytics?timeRange=all");
-        if (res.ok) {
-          const data = await res.json();
-          setAnalytics(data);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch("/api/analytics?timeRange=all");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalytics(data);
+      } else {
+        throw new Error("Unable to load quality reports. Please retry.");
       }
-    };
+    } catch (err: any) {
+      console.error("[Reports Fetch Error]:", err);
+      setError(err?.message || "Failed to load reports data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchAnalytics();
   }, []);
 
-  if (loading || !analytics) {
+  if (loading && !analytics) {
     return (
       <div className="py-20 flex flex-col items-center justify-center space-y-3">
         <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
         <p className="text-xs font-medium text-slate-500">Generating software quality reports...</p>
       </div>
     );
+  }
+
+  if (error && !analytics) {
+    return (
+      <div className="py-16 text-center space-y-3 px-4 max-w-md mx-auto">
+        <Loader2 className="h-10 w-10 text-amber-500 mx-auto" />
+        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Unable to load reports</h3>
+        <p className="text-xs text-slate-500">{error}</p>
+        <button
+          onClick={() => fetchAnalytics()}
+          className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition shadow-sm"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (!analytics) {
+    return null;
   }
 
   return (

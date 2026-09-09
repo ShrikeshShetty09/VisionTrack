@@ -4,6 +4,13 @@ import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+interface AnalyticsCache {
+  data: any;
+  timestamp: number;
+}
+const analyticsCache = new Map<string, AnalyticsCache>();
+const CACHE_TTL_MS = 15000; // 15 seconds cache to eliminate redundant database loads
+
 export async function GET(req: NextRequest) {
   try {
     const user = await getCurrentUser();
@@ -13,6 +20,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const timeRange = searchParams.get("timeRange") || "all"; // "today", "7d", "30d", "month", "all"
+
+    const nowMs = Date.now();
+    const cached = analyticsCache.get(timeRange);
+    if (cached && nowMs - cached.timestamp < CACHE_TTL_MS) {
+      return NextResponse.json(cached.data);
+    }
 
     let dateFilter: Date | undefined;
     const now = new Date();
@@ -31,36 +44,103 @@ export async function GET(req: NextRequest) {
       whereBase.createdAt = { gte: dateFilter };
     }
 
-    // 1. Issue Counts
+    // 1. Single parallel batch of all metrics using optimized groupBy
     const [
       totalIssues,
-      newCount,
-      assignedCount,
-      inProgressCount,
-      inReviewCount,
-      fixedCount,
-      testingCount,
-      testedCount,
-      regressionCount,
-      resolvedCount,
-      reopenedCount,
       overdueCount,
       criticalCount,
+      statusGroup,
+      priorityGroup,
+      softwareList,
+      developers,
+      testers,
     ] = await Promise.all([
       prisma.issue.count({ where: whereBase }),
-      prisma.issue.count({ where: { ...whereBase, status: "NEW" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "ASSIGNED" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "IN_PROGRESS" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "IN_REVIEW" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "FIXED" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "TESTING_IN_PROGRESS" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "TESTED" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "REGRESSION" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "RESOLVED" } }),
-      prisma.issue.count({ where: { ...whereBase, status: "REOPENED" } }),
       prisma.issue.count({ where: { ...whereBase, isOverdue: true, status: { notIn: ["RESOLVED"] } } }),
       prisma.issue.count({ where: { ...whereBase, priority: "CRITICAL", status: { notIn: ["RESOLVED"] } } }),
+      prisma.issue.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+        where: whereBase,
+      }),
+      prisma.issue.groupBy({
+        by: ["priority"],
+        _count: { _all: true },
+        where: whereBase,
+      }),
+      prisma.software.findMany({
+        where: { isActive: true },
+        include: {
+          issues: {
+            where: { deletedAt: null },
+            select: { id: true, status: true },
+          },
+        },
+      }),
+      prisma.user.findMany({
+        where: { role: "DEVELOPER", isActive: true },
+        include: {
+          assignedIssues: {
+            where: { deletedAt: null },
+            select: {
+              id: true,
+              status: true,
+              isOverdue: true,
+              deadlineTimestamp: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          assignedIssuesMany: {
+            where: { deletedAt: null },
+            select: {
+              id: true,
+              status: true,
+              isOverdue: true,
+              deadlineTimestamp: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      }),
+      prisma.user.findMany({
+        where: { role: "TESTER", isActive: true },
+        include: {
+          createdIssues: {
+            where: { deletedAt: null },
+            select: { id: true, status: true, reopenCount: true },
+          },
+          testingRecords: {
+            select: { id: true, result: true },
+          },
+        },
+      }),
     ]);
+
+    const statusMap: Record<string, number> = {};
+    for (const s of statusGroup) {
+      statusMap[s.status] = s._count._all;
+    }
+    const newCount = statusMap["NEW"] || 0;
+    const assignedCount = statusMap["ASSIGNED"] || 0;
+    const inProgressCount = statusMap["IN_PROGRESS"] || 0;
+    const inReviewCount = statusMap["IN_REVIEW"] || 0;
+    const fixedCount = statusMap["FIXED"] || 0;
+    const testingCount = statusMap["TESTING_IN_PROGRESS"] || 0;
+    const testedCount = statusMap["TESTED"] || 0;
+    const regressionCount = statusMap["REGRESSION"] || 0;
+    const resolvedCount = statusMap["RESOLVED"] || 0;
+    const reopenedCount = statusMap["REOPENED"] || 0;
+
+    const priorityMap: Record<string, number> = {};
+    for (const p of priorityGroup) {
+      priorityMap[p.priority] = p._count._all;
+    }
+    const critCount = priorityMap["CRITICAL"] || 0;
+    const highCount = priorityMap["HIGH"] || 0;
+    const medCount = priorityMap["MEDIUM"] || 0;
+    const lowCount = priorityMap["LOW"] || 0;
 
     // 2. Status Distribution for Charts
     const statusDistribution = [
@@ -75,13 +155,6 @@ export async function GET(req: NextRequest) {
     ];
 
     // 3. Priority Distribution
-    const [critCount, highCount, medCount, lowCount] = await Promise.all([
-      prisma.issue.count({ where: { ...whereBase, priority: "CRITICAL" } }),
-      prisma.issue.count({ where: { ...whereBase, priority: "HIGH" } }),
-      prisma.issue.count({ where: { ...whereBase, priority: "MEDIUM" } }),
-      prisma.issue.count({ where: { ...whereBase, priority: "LOW" } }),
-    ]);
-
     const priorityDistribution = [
       { name: "Critical", value: critCount, color: "#ef4444" },
       { name: "High", value: highCount, color: "#f97316" },
@@ -89,17 +162,7 @@ export async function GET(req: NextRequest) {
       { name: "Low", value: lowCount, color: "#3b82f6" },
     ];
 
-    // 4. Software Progress calculation (Dynamically calculated)
-    const softwareList = await prisma.software.findMany({
-      where: { isActive: true },
-      include: {
-        issues: {
-          where: { deletedAt: null },
-          select: { id: true, status: true },
-        },
-      },
-    });
-
+    // 4. Software Progress calculation
     const softwareProgress = softwareList.map((sw) => {
       const total = sw.issues.length;
       const resolved = sw.issues.filter((i) => i.status === "RESOLVED").length;
@@ -117,36 +180,7 @@ export async function GET(req: NextRequest) {
     });
 
     // 5. Developer Performance & Workload
-    const developers = await prisma.user.findMany({
-      where: { role: "DEVELOPER", isActive: true },
-      include: {
-        assignedIssues: {
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            status: true,
-            isOverdue: true,
-            deadlineTimestamp: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-        assignedIssuesMany: {
-          where: { deletedAt: null },
-          select: {
-            id: true,
-            status: true,
-            isOverdue: true,
-            deadlineTimestamp: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-      },
-    });
-
     const developerWorkload = developers.map((dev) => {
-      // Deduplicate issues between primary assignment and multi-assignment
       const issueMap = new Map<string, any>();
       for (const i of dev.assignedIssues) {
         issueMap.set(i.id, i);
@@ -161,7 +195,6 @@ export async function GET(req: NextRequest) {
       const fixed = issues.filter((i) => i.status === "FIXED").length;
       const overdue = issues.filter((i) => i.isOverdue && i.status !== "RESOLVED").length;
 
-      // Count deadlines within next 2 hours
       const next2h = new Date(Date.now() + 2 * 60 * 60 * 1000);
       const urgentDeadlines = issues.filter(
         (i) =>
@@ -188,25 +221,12 @@ export async function GET(req: NextRequest) {
         fixedCount: fixed,
         overdueCount: overdue,
         urgentUpcomingDeadlines: urgentDeadlines,
-        avgResolutionHours: 4.8, // Calculated benchmark
+        avgResolutionHours: 4.8,
         availability,
       };
     });
 
     // 6. Tester Performance
-    const testers = await prisma.user.findMany({
-      where: { role: "TESTER", isActive: true },
-      include: {
-        createdIssues: {
-          where: { deletedAt: null },
-          select: { id: true, status: true, reopenCount: true },
-        },
-        testingRecords: {
-          select: { id: true, result: true },
-        },
-      },
-    });
-
     const testerPerformance = testers.map((t) => {
       const raised = t.createdIssues.length;
       const resolved = t.createdIssues.filter((i) => i.status === "RESOLVED").length;
@@ -232,7 +252,7 @@ export async function GET(req: NextRequest) {
       currentlyOverdue: overdueCount,
     };
 
-    return NextResponse.json({
+    const payload = {
       summary: {
         totalIssues,
         newCount,
@@ -254,9 +274,16 @@ export async function GET(req: NextRequest) {
       developerWorkload,
       testerPerformance,
       deadlinePerformance,
+    };
+
+    analyticsCache.set(timeRange, {
+      data: payload,
+      timestamp: nowMs,
     });
+
+    return NextResponse.json(payload);
   } catch (error: any) {
-    console.error("[Analytics Error]:", error);
+    console.error("[Analytics Error]:", error?.message || error);
     return NextResponse.json({ error: "Failed to generate analytics" }, { status: 500 });
   }
 }

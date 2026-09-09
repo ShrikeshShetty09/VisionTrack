@@ -72,15 +72,15 @@ function IssuesTableContent() {
       try {
         const [swRes, devRes] = await Promise.all([
           fetch("/api/software"),
-          fetch("/api/analytics?timeRange=all"),
+          fetch("/api/users?role=DEVELOPER&activeOnly=true"),
         ]);
         if (swRes.ok) {
           const sw = await swRes.json();
           setSoftwareList(sw.software || []);
         }
         if (devRes.ok) {
-          const devs = await devRes.json();
-          setDevelopers(devs.developerWorkload || []);
+          const devData = await devRes.json();
+          setDevelopers(devData.users || []);
         }
       } catch (err) {
         console.error(err);
