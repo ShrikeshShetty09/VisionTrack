@@ -1,4 +1,5 @@
 {
   "buildCommand": "prisma generate && next build",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "regions": ["sin1"]
 }
