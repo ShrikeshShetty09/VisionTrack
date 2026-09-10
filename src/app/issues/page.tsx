@@ -22,6 +22,7 @@ import {
 import { useAuth } from "@/components/auth-provider";
 import { formatDate, formatDeadline, getStatusBadgeConfig, getPriorityBadgeConfig } from "@/lib/utils";
 import { IssueStatus, Priority, Environment } from "@/types";
+import { RowAssigneeDropdown } from "@/components/issues/RowAssigneeDropdown";
 
 function IssuesTableContent() {
   const { user } = useAuth();
@@ -48,6 +49,7 @@ function IssuesTableContent() {
   const [issues, setIssues] = useState<any[]>([]);
   const [softwareList, setSoftwareList] = useState<any[]>([]);
   const [developers, setDevelopers] = useState<any[]>([]);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filter drawer toggle
@@ -67,12 +69,14 @@ function IssuesTableContent() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Fetch dropdown filter options
+    // Fetch dropdown filter options and assignable users
     const fetchOptions = async () => {
       try {
-        const [swRes, devRes] = await Promise.all([
+        const [swRes, devRes, usersRes, analyticsRes] = await Promise.all([
           fetch("/api/software"),
           fetch("/api/users?role=DEVELOPER&activeOnly=true"),
+          fetch("/api/users?activeOnly=true"),
+          fetch("/api/analytics?timeRange=all"),
         ]);
         if (swRes.ok) {
           const sw = await swRes.json();
@@ -81,6 +85,32 @@ function IssuesTableContent() {
         if (devRes.ok) {
           const devData = await devRes.json();
           setDevelopers(devData.users || []);
+        }
+
+        let devWorkloads: Record<string, any> = {};
+        if (analyticsRes.ok) {
+          const aData = await analyticsRes.json();
+          (aData.developerWorkload || []).forEach((w: any) => {
+            devWorkloads[w.id] = w;
+          });
+        }
+
+        if (usersRes.ok) {
+          const uData = await usersRes.json();
+          const merged = (uData.users || []).map((u: any) => {
+            const wl = devWorkloads[u.id];
+            return {
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: u.role,
+              activeIssuesCount: wl?.activeIssuesCount ?? 0,
+              overdueCount: wl?.overdueCount ?? 0,
+              urgentUpcomingDeadlines: wl?.urgentUpcomingDeadlines ?? 0,
+              availability: wl?.availability ?? (u.role === "DEVELOPER" ? "AVAILABLE" : "N/A"),
+            };
+          });
+          setAvailableUsers(merged);
         }
       } catch (err) {
         console.error(err);
@@ -418,6 +448,7 @@ function IssuesTableContent() {
                 {issues.map((issue) => {
                   const statusBadge = getStatusBadgeConfig(issue.status);
                   const priorityBadge = getPriorityBadgeConfig(issue.priority);
+                  const canAssign = user?.role === "TESTER" || user?.role === "ADMIN";
 
                   return (
                     <tr
@@ -468,37 +499,20 @@ function IssuesTableContent() {
                         </span>
                       </td>
 
-                      {/* Assignee(s) */}
-                      <td className="py-3.5 px-4 max-w-[160px]">
-                        {issue.assignees && issue.assignees.length > 0 ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex -space-x-1.5 overflow-hidden shrink-0">
-                              {issue.assignees.slice(0, 3).map((a: any) => (
-                                <div
-                                  key={a.id}
-                                  title={`${a.name}`}
-                                  className="h-5 w-5 rounded-full bg-indigo-600 text-white font-bold text-[9px] flex items-center justify-center border-2 border-white dark:border-slate-900 shrink-0"
-                                >
-                                  {a.name.charAt(0)}
-                                </div>
-                              ))}
-                            </div>
-                            <span className="font-medium text-slate-800 dark:text-slate-200 truncate block">
-                              {issue.assignees.map((a: any) => a.name).join(", ")}
-                            </span>
-                          </div>
-                        ) : issue.assignedDeveloper ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-5 w-5 rounded-full bg-indigo-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                              {issue.assignedDeveloper.name.charAt(0)}
-                            </div>
-                            <span className="font-medium text-slate-800 dark:text-slate-200 truncate">
-                              {issue.assignedDeveloper.name}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 italic">Unassigned</span>
-                        )}
+                      {/* Assignee(s) Dropdown */}
+                      <td className="py-3.5 px-4 max-w-[170px]">
+                        <RowAssigneeDropdown
+                          issue={issue}
+                          availableUsers={availableUsers}
+                          canAssign={canAssign}
+                          onUpdated={(updated) => {
+                            setIssues((prev) =>
+                              prev.map((item) =>
+                                item.id === updated.id ? { ...item, ...updated } : item
+                              )
+                            );
+                          }}
+                        />
                       </td>
 
                       {/* Deadline */}

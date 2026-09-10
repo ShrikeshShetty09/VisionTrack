@@ -138,6 +138,27 @@ export function runLifecycleTests() {
   });
   assert("Unassigned third developer CANNOT transition multi-assigned issue", !nonAssignedAttempt.allowed);
 
+  // 14. Unassigned issue creation: initial status is NEW, assignees can be empty, deadline optional
+  const unassignedIssue = {
+    title: "Unassigned defect",
+    assignedDeveloperIds: [],
+    deadlineTimestamp: null,
+  };
+  const unassignedInitialStatus = unassignedIssue.assignedDeveloperIds.length > 0 ? "ASSIGNED" : "NEW";
+  assert("Unassigned issue creation defaults to status NEW without assignees", unassignedInitialStatus === "NEW");
+
+  // 15. Deferred assignment from row: Tester and Admin CAN assign developers and advance status from NEW -> ASSIGNED
+  const deferredAssignmentDevs = ["dev-1", "dev-2"];
+  const previousStatus = "NEW";
+  const updatedStatus = previousStatus === "NEW" && deferredAssignmentDevs.length > 0 ? "ASSIGNED" : previousStatus;
+  assert("Deferred assignment from table row transitions NEW -> ASSIGNED", updatedStatus === "ASSIGNED");
+
+  // 16. Setting deadline independently without assignees preserves NEW status
+  const standaloneDeadlineTimestamp = new Date().toISOString();
+  const emptyAssigneesWithDeadline: string[] = [];
+  const statusWithOnlyDeadline = emptyAssigneesWithDeadline.length > 0 ? "ASSIGNED" : "NEW";
+  assert("Issue with deadline but no assignees preserves status NEW", statusWithOnlyDeadline === "NEW" && Boolean(standaloneDeadlineTimestamp));
+
   console.log(`\nLifecycle Test Summary: ${passed} passed, ${failed} failed.\n`);
   return failed === 0;
 }

@@ -494,11 +494,16 @@ export default function CreateIssuePage() {
         {/* User Assignment & Deadline Section */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-              2. Assignee Selection & Deadline (Single or Multiple Assignees)
-            </h2>
-            <span className="text-xs text-slate-500">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Users className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                2. Assignee Selection & Deadline <span className="text-[11px] font-normal text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">(Optional)</span>
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Assignees and resolution deadline are completely optional. Issues can be created without them and assigned later directly from the issues repository table.
+              </p>
+            </div>
+            <span className="text-xs text-slate-500 font-medium shrink-0">
               {assignedDeveloperIds.length} selected
             </span>
           </div>
@@ -612,31 +617,42 @@ export default function CreateIssuePage() {
           </div>
 
           {/* Deadline Date & Time Inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div>
-              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                Deadline Date
-              </label>
-              <input
-                type="date"
-                value={deadlineDate}
-                onChange={(e) => setDeadlineDate(e.target.value)}
-                disabled={assignedDeveloperIds.length === 0}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
-              />
-            </div>
+          <div className="pt-2 space-y-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                    Deadline Date <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
+                  </label>
+                  {deadlineDate && (
+                    <button
+                      type="button"
+                      onClick={() => setDeadlineDate("")}
+                      className="text-[10px] text-slate-400 hover:text-red-500 font-medium"
+                    >
+                      Clear Date
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="date"
+                  value={deadlineDate}
+                  onChange={(e) => setDeadlineDate(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                Deadline Time (HH:MM)
-              </label>
-              <input
-                type="time"
-                value={deadlineTime}
-                onChange={(e) => setDeadlineTime(e.target.value)}
-                disabled={assignedDeveloperIds.length === 0}
-                className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
-              />
+              <div>
+                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
+                  Deadline Time (HH:MM) <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
+                </label>
+                <input
+                  type="time"
+                  value={deadlineTime}
+                  onChange={(e) => setDeadlineTime(e.target.value)}
+                  className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
             </div>
           </div>
 

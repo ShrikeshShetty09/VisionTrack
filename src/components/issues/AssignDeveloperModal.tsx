@@ -154,11 +154,6 @@ export function AssignDeveloperModal({
       setError("Please select at least one user to assign.");
       return;
     }
-    if (!deadlineDate) {
-      setError("Please specify a deadline date.");
-      return;
-    }
-
     if (showWorkloadWarning && !warningIgnored) {
       setError("Please acknowledge the workload conflict warning or choose other assignees.");
       return;
@@ -168,10 +163,14 @@ export function AssignDeveloperModal({
     setError("");
 
     try {
-      // Accurately compute client-side local ISO timestamp so server doesn't alter date or time
-      const [year, month, day] = deadlineDate.split("-").map(Number);
-      const [h, m] = (deadlineTime || "18:30").split(":").map(Number);
-      const localDeadline = new Date(year, month - 1, day, isNaN(h) ? 18 : h, isNaN(m) ? 30 : m, 0, 0);
+      // Accurately compute client-side local ISO timestamp if deadline date provided
+      let deadlineTimestamp: string | null = null;
+      if (deadlineDate) {
+        const [year, month, day] = deadlineDate.split("-").map(Number);
+        const [h, m] = (deadlineTime || "18:30").split(":").map(Number);
+        const localDeadline = new Date(year, month - 1, day, isNaN(h) ? 18 : h, isNaN(m) ? 30 : m, 0, 0);
+        deadlineTimestamp = localDeadline.toISOString();
+      }
 
       const res = await fetch(`/api/issues/${issueCode}`, {
         method: "PUT",
@@ -180,9 +179,9 @@ export function AssignDeveloperModal({
           action: "ASSIGN_DEVELOPER",
           developerIds: selectedDevIds,
           developerId: selectedDevIds[0],
-          deadlineDate,
-          deadlineTime: deadlineTime || "18:30",
-          deadlineTimestamp: localDeadline.toISOString(),
+          deadlineDate: deadlineDate || null,
+          deadlineTime: deadlineDate ? (deadlineTime || "18:30") : null,
+          deadlineTimestamp,
           notes,
         }),
       });
@@ -402,13 +401,23 @@ export function AssignDeveloperModal({
           {/* Deadline Date & Time */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                Deadline Date <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  Deadline Date <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
+                </label>
+                {deadlineDate && (
+                  <button
+                    type="button"
+                    onClick={() => setDeadlineDate("")}
+                    className="text-[10px] text-slate-400 hover:text-red-500 font-medium"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <input
                   type="date"
-                  required
                   value={deadlineDate}
                   onChange={(e) => setDeadlineDate(e.target.value)}
                   className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
@@ -418,12 +427,11 @@ export function AssignDeveloperModal({
 
             <div>
               <label className="block text-xs font-semibold text-slate-800 dark:text-slate-200 mb-1">
-                Deadline Time (HH:MM) <span className="text-red-500">*</span>
+                Deadline Time (HH:MM) <span className="text-[10px] text-slate-400 font-normal">(Optional)</span>
               </label>
               <div className="relative">
                 <input
                   type="time"
-                  required
                   value={deadlineTime}
                   onChange={(e) => setDeadlineTime(e.target.value)}
                   className="w-full text-xs px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"

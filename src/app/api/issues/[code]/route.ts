@@ -126,13 +126,31 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
     const isCreator = issue.createdById === user.id;
 
     // ACTION 1: ASSIGN DEVELOPER & DEADLINE (Supports single or multiple users)
-    if (action === "ASSIGN_DEVELOPER") {
+    if (action === "ASSIGN_DEVELOPER" || action === "UPDATE_ASSIGNMENT_AND_DEADLINE") {
       if (user.role !== "TESTER" && user.role !== "ADMIN") {
-        return NextResponse.json({ error: "Only Testers and Admins can assign issues." }, { status: 403 });
+        return NextResponse.json({ error: "Only Testers and Admins can assign issues or set deadlines." }, { status: 403 });
       }
 
-      const { developerId, developerIds, assignedUserIds, deadlineDate, deadlineTime, deadlineTimestamp: clientDeadlineTimestamp, notes } = body;
-      
+      const {
+        developerId,
+        developerIds,
+        assignedUserIds,
+        deadlineDate,
+        deadlineTime,
+        deadlineTimestamp: clientDeadlineTimestamp,
+        notes,
+        clearDeadline,
+      } = body;
+
+      const hasDevsInput =
+        Array.isArray(developerIds) || Array.isArray(assignedUserIds) || developerId !== undefined;
+      const hasDeadlineInput =
+        clientDeadlineTimestamp !== undefined || deadlineDate !== undefined || clearDeadline !== undefined;
+
+      if (!hasDevsInput && !hasDeadlineInput) {
+        return NextResponse.json({ error: "Please select assignees or specify a deadline." }, { status: 400 });
+      }
+
       const rawDevIds: string[] = Array.isArray(developerIds)
         ? developerIds.filter(Boolean)
         : Array.isArray(assignedUserIds)
@@ -142,67 +160,86 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         : [];
       const selectedDevIds = Array.from(new Set(rawDevIds));
 
-      if (selectedDevIds.length === 0) {
-        return NextResponse.json({ error: "Please select at least one user to assign." }, { status: 400 });
+      let devs: any[] = [];
+      if (selectedDevIds.length > 0) {
+        devs = await prisma.user.findMany({
+          where: {
+            id: { in: selectedDevIds },
+            isActive: true,
+          },
+        });
+
+        if (devs.length === 0) {
+          return NextResponse.json({ error: "Selected user(s) are inactive or invalid." }, { status: 400 });
+        }
       }
-
-      const devs = await prisma.user.findMany({
-        where: {
-          id: { in: selectedDevIds },
-          isActive: true,
-        },
-      });
-
-      if (devs.length === 0) {
-        return NextResponse.json({ error: "Selected user(s) are inactive or invalid." }, { status: 400 });
-      }
-
-      const primaryDev = devs[0];
 
       // Compute deadline timestamp accurately
-      let deadlineTimestamp: Date | null = null;
-      if (clientDeadlineTimestamp) {
+      let deadlineTimestamp: Date | null = issue.deadlineTimestamp;
+      let deadlineTimeValue: string | null = issue.deadlineTime;
+
+      if (clearDeadline === true || deadlineDate === "" || deadlineDate === null) {
+        deadlineTimestamp = null;
+        deadlineTimeValue = null;
+      } else if (clientDeadlineTimestamp) {
         deadlineTimestamp = new Date(clientDeadlineTimestamp);
+        deadlineTimeValue = deadlineTime || "18:30";
       } else if (deadlineDate) {
         const timeStr = deadlineTime && deadlineTime.includes(":") ? deadlineTime : "18:30";
         deadlineTimestamp = new Date(`${deadlineDate}T${timeStr}`);
+        deadlineTimeValue = timeStr;
       }
 
       const prevDevId = issue.assignedDeveloperId;
       const prevStatus = issue.status;
-      const newStatus: IssueStatus = issue.status === "NEW" ? "ASSIGNED" : issue.status;
+      let newStatus: IssueStatus = issue.status;
+
+      if (hasDevsInput) {
+        if (devs.length > 0 && issue.status === "NEW") {
+          newStatus = "ASSIGNED";
+        } else if (devs.length === 0 && issue.status === "ASSIGNED") {
+          newStatus = "NEW";
+        }
+      }
+
+      const updateData: any = {
+        status: newStatus,
+        deadlineDate: deadlineTimestamp,
+        deadlineTime: deadlineTimeValue,
+        deadlineTimestamp: deadlineTimestamp,
+        isOverdue: deadlineTimestamp ? deadlineTimestamp.getTime() < Date.now() : false,
+      };
+
+      if (hasDevsInput) {
+        updateData.assignedDeveloperId = devs[0]?.id || null;
+        updateData.assignees = {
+          set: devs.map((d) => ({ id: d.id })),
+        };
+      }
 
       const updatedIssue = await prisma.issue.update({
         where: { id: issue.id },
-        data: {
-          assignedDeveloperId: primaryDev.id,
-          assignees: {
-            set: devs.map((d) => ({ id: d.id })),
-          },
-          status: newStatus,
-          deadlineDate: deadlineTimestamp,
-          deadlineTime: deadlineTime || null,
-          deadlineTimestamp: deadlineTimestamp,
-          isOverdue: deadlineTimestamp ? deadlineTimestamp.getTime() < Date.now() : false,
-        },
-        include: { assignedDeveloper: true, assignees: true, software: true },
+        data: updateData,
+        include: { assignedDeveloper: true, assignees: true, software: true, module: true },
       });
 
       // Assignment records for all assignees
-      for (const dev of devs) {
-        await prisma.issueAssignment.create({
-          data: {
-            issueId: issue.id,
-            developerId: dev.id,
-            assignedById: user.id,
-            deadline: deadlineTimestamp,
-            notes: notes || null,
-          },
-        });
+      if (devs.length > 0) {
+        for (const dev of devs) {
+          await prisma.issueAssignment.create({
+            data: {
+              issueId: issue.id,
+              developerId: dev.id,
+              assignedById: user.id,
+              deadline: deadlineTimestamp,
+              notes: notes || null,
+            },
+          });
+        }
       }
 
       // Status history if changed
-      const devNames = devs.map((d) => d.name).join(", ");
+      const devNames = devs.length > 0 ? devs.map((d) => d.name).join(", ") : "Unassigned";
       if (prevStatus !== newStatus) {
         await prisma.issueStatusHistory.create({
           data: {
@@ -210,7 +247,19 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
             changedById: user.id,
             fromStatus: prevStatus,
             toStatus: newStatus,
-            reason: `Assigned to ${devNames}`,
+            reason: devs.length > 0 ? `Assigned to ${devNames}` : "Unassigned",
+          },
+        });
+      } else if (hasDeadlineInput && !hasDevsInput) {
+        await prisma.issueStatusHistory.create({
+          data: {
+            issueId: issue.id,
+            changedById: user.id,
+            fromStatus: prevStatus,
+            toStatus: prevStatus,
+            reason: deadlineTimestamp
+              ? `Deadline set to ${deadlineTimestamp.toLocaleDateString()}`
+              : "Deadline cleared",
           },
         });
       }
@@ -218,17 +267,17 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
       // Audit Log
       await recordAuditLog({
         userId: user.id,
-        action: "ISSUE_ASSIGNED",
+        action: devs.length > 0 ? "ISSUE_ASSIGNED" : "ISSUE_DEADLINE_UPDATED",
         entityType: "Issue",
         entityId: issue.id,
         oldValue: {
           assignedDeveloperId: prevDevId,
-          assigneeIds: issue.assignees?.map((a) => a.id) || [],
+          assigneeIds: issue.assignees?.map((a: any) => a.id) || [],
           deadlineTimestamp: issue.deadlineTimestamp,
         },
         newValue: {
-          assignedDeveloperId: primaryDev.id,
-          assigneeIds: devs.map((d) => d.id),
+          assignedDeveloperId: devs[0]?.id || null,
+          assigneeIds: devs.map((d: any) => d.id),
           deadlineTimestamp,
           status: newStatus,
         },
@@ -239,30 +288,34 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
         ? deadlineTimestamp.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })
         : "No deadline set";
 
-      // Push notification & email to each assigned user
-      for (const dev of devs) {
-        await dispatchNotification({
-          userId: dev.id,
-          type: "ISSUE_ASSIGNED",
-          title: `🔔 Issue Assigned — ${issue.issueCode}`,
-          message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
-          issueId: issue.id,
-          issueCode: issue.issueCode,
-          issueTitle: issue.title,
-          actionUrl: `/issues/${issue.issueCode}`,
-          emailDetails: [
-            { label: "Software", value: issue.software.name },
-            { label: "Priority", value: issue.priority },
-            { label: "Deadline", value: deadlineFormatted },
-            { label: "Assigned By", value: user.name },
-          ],
-        });
+      // Push notification & email to each assigned user if devs were assigned
+      if (devs.length > 0) {
+        for (const dev of devs) {
+          await dispatchNotification({
+            userId: dev.id,
+            type: "ISSUE_ASSIGNED",
+            title: `🔔 Issue Assigned — ${issue.issueCode}`,
+            message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
+            issueId: issue.id,
+            issueCode: issue.issueCode,
+            issueTitle: issue.title,
+            actionUrl: `/issues/${issue.issueCode}`,
+            emailDetails: [
+              { label: "Software", value: issue.software.name },
+              { label: "Priority", value: issue.priority },
+              { label: "Deadline", value: deadlineFormatted },
+              { label: "Assigned By", value: user.name },
+            ],
+          });
+        }
       }
 
       return NextResponse.json({
         success: true,
         issue: updatedIssue,
-        message: `Issue assigned to ${devNames} successfully.`,
+        message: devs.length > 0
+          ? `Issue assigned to ${devNames} successfully.`
+          : `Issue deadline updated successfully.`,
       });
     }
 
