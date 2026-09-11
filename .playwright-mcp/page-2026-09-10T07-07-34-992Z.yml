@@ -1,0 +1,183 @@
+- generic [ref=f3e3]:
+  - generic [ref=f3e4]:
+    - navigation [ref=f3e5]:
+      - generic [ref=f3e7]:
+        - link [ref=f3e9] [cursor=pointer]:
+          - /url: /
+          - img "Vision Data Labs" [ref=f3e10]
+        - generic [ref=f3e11]:
+          - button "🇺🇸 United States" [active] [ref=f3e12] [cursor=pointer]:
+            - generic [ref=f3e13]: 🇺🇸
+            - generic [ref=f3e14]: United States
+          - button "Notifications" [ref=f3e18] [cursor=pointer]
+          - button "A" [ref=f3e23] [cursor=pointer]
+          - button [ref=f3e25] [cursor=pointer]
+    - generic [ref=f3e364]:
+      - generic [ref=f3e365]:
+        - generic [ref=f3e366]:
+          - heading "Select Country" [level=2] [ref=f3e367]
+          - paragraph [ref=f3e368]: Choose your working country to continue
+        - button [ref=f3e369] [cursor=pointer]
+      - generic [ref=f3e373]:
+        - button "🇮🇳 India ₹ INR • Indian rupee →" [ref=f3e374] [cursor=pointer]:
+          - generic [ref=f3e375]:
+            - generic [ref=f3e376]: 🇮🇳
+            - generic [ref=f3e377]:
+              - generic [ref=f3e378]: India
+              - generic [ref=f3e379]: ₹ INR • Indian rupee
+            - generic [ref=f3e380]: →
+        - button "🇱🇰 Sri Lanka Rs LKR • Sri Lankan rupee →" [ref=f3e381] [cursor=pointer]:
+          - generic [ref=f3e382]:
+            - generic [ref=f3e383]: 🇱🇰
+            - generic [ref=f3e384]:
+              - generic [ref=f3e385]: Sri Lanka
+              - generic [ref=f3e386]: Rs LKR • Sri Lankan rupee
+            - generic [ref=f3e387]: →
+        - button "🇺🇸 United States $ USD • United States dollar →" [ref=f3e388] [cursor=pointer]:
+          - generic [ref=f3e389]:
+            - generic [ref=f3e390]: 🇺🇸
+            - generic [ref=f3e391]:
+              - generic [ref=f3e392]: United States
+              - generic [ref=f3e393]: $ USD • United States dollar
+            - generic [ref=f3e394]: →
+        - button "🏳️ Chennai • →" [ref=f3e395] [cursor=pointer]:
+          - generic [ref=f3e396]:
+            - generic [ref=f3e397]: 🏳️
+            - generic [ref=f3e398]:
+              - generic [ref=f3e399]: Chennai
+              - generic [ref=f3e400]: •
+            - generic [ref=f3e401]: →
+      - paragraph [ref=f3e403]: You can change this selection anytime from your profile
+  - generic [ref=f3e158]:
+    - generic [ref=f3e162]:
+      - button [ref=f3e332] [cursor=pointer]
+      - generic [ref=f3e172]:
+        - 'heading "Job Number: SIIN260171" [level=1] [ref=f3e173]'
+        - generic [ref=f3e174]: "Booking No: BKG-TEST5"
+    - generic [ref=f3e182]:
+      - generic [ref=f3e183]:
+        - generic [ref=f3e184]:
+          - 'heading "Create new sale bill On Account Amount: 0.00" [level=3] [ref=f3e335]':
+            - generic [ref=f3e186]: Create new sale bill
+            - generic [ref=f3e187]:
+              - generic [ref=f3e188]: "On Account Amount:"
+              - generic [ref=f3e189]: "0.00"
+          - generic [ref=f3e190]:
+            - generic [ref=f3e192]:
+              - generic [ref=f3e193]: Customer Name
+              - generic [ref=f3e194]:
+                - textbox "Customer Name" [ref=f3e196]:
+                  - /placeholder: Search customer...
+                  - text: SHRI (Badakhshan)(Ashkāsham)
+                - img [aria-hidden] [ref=f3e336] [cursor=pointer]
+            - generic [ref=f3e198]:
+              - generic [ref=f3e199]: Branch/Location
+              - textbox "Branch/Location" [ref=f3e202]:
+                - /placeholder: Select branch...
+            - generic [ref=f3e204]:
+              - generic [ref=f3e205]: Is FL *
+              - generic [ref=f3e206]:
+                - textbox "Is FL *" [ref=f3e208]:
+                  - /placeholder: Select...
+                  - text: "Yes"
+                - img [aria-hidden] [ref=f3e209] [cursor=pointer]
+            - generic [ref=f3e213]:
+              - generic [ref=f3e214]: Is Console Job *
+              - generic [ref=f3e215]:
+                - textbox "Is Console Job *" [ref=f3e217]:
+                  - /placeholder: Select...
+                  - text: "No"
+                - img [aria-hidden] [ref=f3e218] [cursor=pointer]
+            - generic [ref=f3e222]:
+              - generic [ref=f3e223]: FTZ
+              - generic [ref=f3e224]:
+                - textbox "FTZ" [ref=f3e226]:
+                  - /placeholder: FTZ (Yes/No)
+                  - text: "No"
+                - img [aria-hidden] [ref=f3e227] [cursor=pointer]
+        - generic [ref=f3e231]:
+          - generic [ref=f3e232]:
+            - text: VAT
+            - textbox "VAT" [ref=f3e234]
+          - generic [ref=f3e235]:
+            - text: State
+            - textbox "State" [ref=f3e237]: Badakhshan
+          - generic [ref=f3e238]:
+            - text: Bill Date
+            - generic [ref=f3e239]: 09/10/2026
+        - group "Containers on Invoice" [ref=f3e249]:
+          - generic [ref=f3e252] [cursor=pointer]:
+            - checkbox "Unnamed container" [checked] [ref=f3e253]
+            - text: Unnamed container
+        - generic [ref=f3e254]:
+          - generic [ref=f3e255]: Add Line Item
+          - generic [ref=f3e258]:
+            - generic [ref=f3e260]:
+              - generic [ref=f3e261]: Billing Head
+              - textbox "Billing Head" [ref=f3e264]:
+                - /placeholder: Select service...
+            - generic [ref=f3e265]:
+              - text: SAC Code
+              - textbox "SAC" [disabled] [ref=f3e267]
+            - generic [ref=f3e268]:
+              - text: Remarks
+              - textbox "Description" [ref=f3e270]
+          - generic [ref=f3e271]:
+            - generic [ref=f3e272]:
+              - text: Charges
+              - textbox "0.00" [ref=f3e274]: "1"
+            - generic [ref=f3e275]:
+              - text: Qty
+              - textbox "1" [ref=f3e277]
+            - generic [ref=f3e278]:
+              - text: Currency
+              - generic [ref=f3e280]:
+                - textbox [ref=f3e282]:
+                  - /placeholder: Currency
+                  - text: USD
+                - img [aria-hidden] [ref=f3e283] [cursor=pointer]
+            - generic [ref=f3e286]:
+              - text: VAT %
+              - combobox [ref=f3e287]:
+                - option "No VAT" [selected]
+                - option "18%"
+          - button "Add Item" [ref=f3e289] [cursor=pointer]
+      - generic [ref=f3e290]:
+        - generic [ref=f3e291]:
+          - heading "Bill Summary" [level=3] [ref=f3e293]
+          - generic [ref=f3e294]:
+            - generic [ref=f3e295]:
+              - generic [ref=f3e296]: Total Charges
+              - generic [ref=f3e297]: "0.00"
+            - generic [ref=f3e298]:
+              - generic [ref=f3e299]: VAT Amount
+              - generic [ref=f3e300]: "+0.00"
+            - generic [ref=f3e301]:
+              - generic [ref=f3e302]: VAT Adjustment
+              - spinbutton "VAT Adjustment" [ref=f3e304]
+            - generic [ref=f3e305]:
+              - generic [ref=f3e306]: Total Adjustment
+              - spinbutton "Total Adjustment" [ref=f3e308]
+            - generic [ref=f3e309]:
+              - generic [ref=f3e310]: Grand Total
+              - generic [ref=f3e311]: "0.00"
+          - generic [ref=f3e312]:
+            - button "Create Sale Bill" [disabled]
+        - generic [ref=f3e313]:
+          - heading "Quick Summary" [level=4] [ref=f3e315]
+          - generic [ref=f3e316]:
+            - generic [ref=f3e317]:
+              - generic [ref=f3e318]: Total Charges
+              - generic [ref=f3e319]: "0.00"
+            - generic [ref=f3e320]:
+              - generic [ref=f3e321]: VAT Amount
+              - generic [ref=f3e322]: "+0.00"
+            - generic [ref=f3e323]:
+              - generic [ref=f3e324]: VAT Adjustment
+              - generic [ref=f3e325]: "0.00"
+            - generic [ref=f3e326]:
+              - generic [ref=f3e327]: Total Adjustment
+              - generic [ref=f3e328]: "0.00"
+            - generic [ref=f3e329]:
+              - generic [ref=f3e330]: Grand Total
+              - generic [ref=f3e331]: "0.00"

@@ -1,0 +1,73 @@
+- generic [ref=f13e3]:
+  - navigation [ref=f13e5]:
+    - generic [ref=f13e7]:
+      - link [ref=f13e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f13e10]
+      - generic [ref=f13e11]:
+        - button "🇮🇳 India" [ref=f13e12] [cursor=pointer]:
+          - generic [ref=f13e13]: 🇮🇳
+          - generic [ref=f13e14]: India
+        - button "Notifications" [ref=f13e18] [cursor=pointer]
+        - button "A" [ref=f13e23] [cursor=pointer]
+        - button [ref=f13e25] [cursor=pointer]
+  - generic [ref=f13e27]:
+    - generic [ref=f13e30]:
+      - generic [ref=f13e31]:
+        - link [ref=f13e32] [cursor=pointer]:
+          - /url: /air-imports/salepurchasesummery
+        - 'heading "Air Job No: N/A" [level=1] [ref=f13e43]'
+      - generic [ref=f13e44]:
+        - link [ref=f13e45] [cursor=pointer]:
+          - /url: /new-air-sale-bill/66c782cb-3011-4b79-a3fe-ce0c0b006060
+          - button "Add Air Sell Bill" [ref=f13e46]
+        - link [ref=f13e47] [cursor=pointer]:
+          - /url: /new-air-purchase-bill/66c782cb-3011-4b79-a3fe-ce0c0b006060
+          - button "Add Air Purchase Bill" [ref=f13e48]
+    - navigation [ref=f13e51]:
+      - generic [ref=f13e52]:
+        - button "Sale Bill" [ref=f13e53] [cursor=pointer]
+        - button "Purchase Bill" [ref=f13e58] [cursor=pointer]
+        - button "Documents" [ref=f13e63] [cursor=pointer]
+      - generic [ref=f13e68]:
+        - generic [ref=f13e74]:
+          - generic [ref=f13e75]: Total Sale
+          - generic [ref=f13e76]: ₹0.00
+          - generic [ref=f13e77]: "With GST: ₹0.00"
+        - generic [ref=f13e84]:
+          - generic [ref=f13e85]: Total Purchase
+          - generic [ref=f13e86]: ₹0.00
+          - generic [ref=f13e87]: "With GST: ₹0.00"
+        - generic [ref=f13e92]:
+          - generic [ref=f13e93]: Profit (0.0%)
+          - generic [ref=f13e94]: ₹0.00
+    - generic [ref=f13e100]:
+      - table [ref=f13e103]:
+        - rowgroup [ref=f13e104]:
+          - row [ref=f13e105]:
+            - columnheader "Bill No" [ref=f13e106]
+            - columnheader "Bill Date" [ref=f13e107]
+            - columnheader "Party Details" [ref=f13e108]
+            - columnheader "Job Info" [ref=f13e109]
+            - columnheader "Items" [ref=f13e110]
+            - columnheader "Credit Notes" [ref=f13e111]
+            - columnheader "Total Amount" [ref=f13e112]
+            - columnheader "GST Amount" [ref=f13e113]
+            - columnheader "Grand Total" [ref=f13e114]
+            - columnheader "Updated By" [ref=f13e115]
+            - columnheader "Status" [ref=f13e116]
+            - columnheader "Payment Status" [ref=f13e117]
+            - columnheader [ref=f13e118]
+        - rowgroup [ref=f13e120]:
+          - row [ref=f13e121]:
+            - cell [ref=f13e122]:
+              - generic [ref=f13e123]:
+                - paragraph [ref=f13e124]: No sale bills found
+                - paragraph [ref=f13e125]: No sale bills have been created for this air booking yet.
+      - generic [ref=f13e127]:
+        - generic [ref=f13e128]: Showing 1 to 0 of 0 entries
+        - generic [ref=f13e129]:
+          - button "Previous" [disabled] [ref=f13e130]
+          - button "1" [ref=f13e131] [cursor=pointer]
+          - button "Next" [disabled] [ref=f13e132]
+    - button [ref=f13e134] [cursor=pointer]

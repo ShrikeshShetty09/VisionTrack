@@ -18,6 +18,7 @@ import {
   AlertCircle,
   Loader2,
   CheckCircle2,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { formatDate, formatDeadline, getStatusBadgeConfig, getPriorityBadgeConfig } from "@/lib/utils";
@@ -33,6 +34,7 @@ function IssuesTableContent() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [status, setStatus] = useState<string>(searchParams.get("status") || "");
   const [priority, setPriority] = useState<string>(searchParams.get("priority") || "");
+  const [publicationStatus, setPublicationStatus] = useState<string>(searchParams.get("publicationStatus") || "");
   const [softwareId, setSoftwareId] = useState(searchParams.get("softwareId") || "");
   const [moduleId, setModuleId] = useState(searchParams.get("moduleId") || "");
   const [developerId, setDeveloperId] = useState(searchParams.get("developerId") || "");
@@ -60,6 +62,7 @@ function IssuesTableContent() {
     setSearch(searchParams.get("search") || "");
     setStatus(searchParams.get("status") || "");
     setPriority(searchParams.get("priority") || "");
+    setPublicationStatus(searchParams.get("publicationStatus") || "");
     setSoftwareId(searchParams.get("softwareId") || "");
     setModuleId(searchParams.get("moduleId") || "");
     setDeveloperId(searchParams.get("developerId") || "");
@@ -126,6 +129,7 @@ function IssuesTableContent() {
       if (search) params.set("search", search);
       if (status) params.set("status", status);
       if (priority) params.set("priority", priority);
+      if (publicationStatus) params.set("publicationStatus", publicationStatus);
       if (softwareId) params.set("softwareId", softwareId);
       if (moduleId) params.set("moduleId", moduleId);
       if (developerId) params.set("developerId", developerId);
@@ -158,7 +162,7 @@ function IssuesTableContent() {
     return () => {
       window.removeEventListener("visiontrack:action", handleAction);
     };
-  }, [page, sortBy, sortOrder, status, priority, softwareId, moduleId, developerId, overdueOnly, myIssuesOnly]);
+  }, [page, sortBy, sortOrder, status, priority, softwareId, moduleId, developerId, overdueOnly, myIssuesOnly, publicationStatus]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +174,7 @@ function IssuesTableContent() {
     setSearch("");
     setStatus("");
     setPriority("");
+    setPublicationStatus("");
     setSoftwareId("");
     setModuleId("");
     setDeveloperId("");
@@ -192,13 +197,22 @@ function IssuesTableContent() {
         </div>
 
         {(user?.role === "TESTER" || user?.role === "ADMIN") && (
-          <Link
-            href="/issues/create"
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
-          >
-            <PlusCircle className="h-4 w-4" />
-            <span>Create Issue</span>
-          </Link>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            <Link
+              href="/issues/deleted"
+              className="px-3.5 py-2 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/40 text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Deleted Issues</span>
+            </Link>
+            <Link
+              href="/issues/create"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5"
+            >
+              <PlusCircle className="h-4 w-4" />
+              <span>Create Issue</span>
+            </Link>
+          </div>
         )}
       </div>
 
@@ -247,6 +261,27 @@ function IssuesTableContent() {
         {/* Filter Drawer */}
         {showFilterDrawer && (
           <div className="pt-3 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 animate-fade-in">
+            {/* Publication Status (Admin / Tester Only) */}
+            {(user?.role === "ADMIN" || user?.role === "TESTER") && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                  Lifecycle
+                </label>
+                <select
+                  value={publicationStatus}
+                  onChange={(e) => {
+                    setPublicationStatus(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white font-medium"
+                >
+                  <option value="">All (Drafts &amp; Pub)</option>
+                  <option value="PUBLISHED">Published Only</option>
+                  <option value="DRAFT">Drafts Only</option>
+                </select>
+              </div>
+            )}
+
             {/* Status Filter */}
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
@@ -456,11 +491,18 @@ function IssuesTableContent() {
                       className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition group cursor-pointer"
                       onClick={() => router.push(`/issues/${issue.issueCode}`)}
                     >
-                      {/* Code */}
+                      {/* Code & Draft Indicator */}
                       <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">
-                        <span className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition">
-                          {issue.issueCode}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white transition">
+                            {issue.issueCode}
+                          </span>
+                          {issue.publicationStatus === "DRAFT" && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                              Draft
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Title */}

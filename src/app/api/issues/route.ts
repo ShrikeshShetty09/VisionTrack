@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status") as IssueStatus | null;
     const priority = searchParams.get("priority") as Priority | null;
     const environment = searchParams.get("environment") as Environment | null;
+    const publicationStatus = searchParams.get("publicationStatus");
     const softwareId = searchParams.get("softwareId") || "";
     const moduleId = searchParams.get("moduleId") || "";
     const developerId = searchParams.get("developerId") || "";
@@ -33,6 +34,13 @@ export async function GET(req: NextRequest) {
     const where: any = {
       deletedAt: null,
     };
+
+    // Access control: Developers CANNOT view DRAFT issues; only TESTER and ADMIN can see drafts
+    if (user.role === "DEVELOPER") {
+      where.publicationStatus = "PUBLISHED";
+    } else if (publicationStatus && (publicationStatus === "DRAFT" || publicationStatus === "PUBLISHED")) {
+      where.publicationStatus = publicationStatus;
+    }
 
     // Role-specific scoping when requested
     if (myIssuesOnly) {
@@ -100,6 +108,7 @@ export async function GET(req: NextRequest) {
           software: { select: { id: true, name: true, code: true } },
           module: { select: { id: true, name: true } },
           createdBy: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
+          deletedBy: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
           assignedDeveloper: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
           assignees: { select: { id: true, name: true, email: true, role: true, profileImage: true } },
           resolutions: {
@@ -234,6 +243,7 @@ export async function POST(req: NextRequest) {
     const assignedDevIds = Array.from(new Set(rawDevIds));
     const primaryDevId = assignedDevIds[0] || null;
 
+    const publicationStatus: "DRAFT" | "PUBLISHED" = body.publicationStatus === "DRAFT" ? "DRAFT" : "PUBLISHED";
     const initialStatus: IssueStatus = assignedDevIds.length > 0 ? "ASSIGNED" : "NEW";
 
     const issue = await prisma.issue.create({
@@ -246,6 +256,7 @@ export async function POST(req: NextRequest) {
         environment: resolvedEnvironment,
         priority: resolvedPriority,
         status: initialStatus,
+        publicationStatus,
         jobUrl: jobUrl?.trim() || null,
         createdById: user.id,
         assignedDeveloperId: primaryDevId,
@@ -298,6 +309,7 @@ export async function POST(req: NextRequest) {
         issueCode: issue.issueCode,
         title: issue.title,
         priority: issue.priority,
+        publicationStatus,
         assignedDeveloperId: primaryDevId,
         assignedUserIds: assignedDevIds,
         deadlineTimestamp,
@@ -305,7 +317,8 @@ export async function POST(req: NextRequest) {
       ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
     });
 
-    // If developers assigned, create assignment records & send push notifications
+    // If developers assigned and issue is PUBLISHED, create assignment records & send push notifications
+    // Note: If DRAFT, notifications are deferred until issue is published
     if (assignedDevIds.length > 0) {
       const deadlineFormatted = deadlineTimestamp
         ? deadlineTimestamp.toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })
@@ -322,22 +335,24 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        await dispatchNotification({
-          userId: devId,
-          type: "ISSUE_ASSIGNED",
-          title: `🔔 New Issue Assigned — ${issue.issueCode}`,
-          message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
-          issueId: issue.id,
-          issueCode: issue.issueCode,
-          issueTitle: issue.title,
-          actionUrl: `/issues/${issue.issueCode}`,
-          emailDetails: [
-            { label: "Software", value: issue.software.name },
-            { label: "Priority", value: issue.priority },
-            { label: "Deadline", value: deadlineFormatted },
-            { label: "Reported By", value: user.name },
-          ],
-        });
+        if (publicationStatus === "PUBLISHED") {
+          await dispatchNotification({
+            userId: devId,
+            type: "ISSUE_ASSIGNED",
+            title: `🔔 New Issue Assigned — ${issue.issueCode}`,
+            message: `${issue.title} has been assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
+            issueId: issue.id,
+            issueCode: issue.issueCode,
+            issueTitle: issue.title,
+            actionUrl: `/issues/${issue.issueCode}`,
+            emailDetails: [
+              { label: "Software", value: issue.software.name },
+              { label: "Priority", value: issue.priority },
+              { label: "Deadline", value: deadlineFormatted },
+              { label: "Reported By", value: user.name },
+            ],
+          });
+        }
       }
     }
 

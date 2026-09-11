@@ -1,0 +1,165 @@
+- generic [ref=f14e3]:
+  - navigation [ref=f14e5]:
+    - generic [ref=f14e7]:
+      - link [ref=f14e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f14e10]
+      - generic [ref=f14e11]:
+        - button "🇮🇳 India" [ref=f14e12] [cursor=pointer]:
+          - generic [ref=f14e13]: 🇮🇳
+          - generic [ref=f14e14]: India
+        - button "Notifications, 1 unread" [ref=f14e33] [cursor=pointer]:
+          - generic [ref=f14e34]: "1"
+        - button "A" [ref=f14e23] [cursor=pointer]
+        - button [ref=f14e25] [cursor=pointer]
+  - generic [ref=f14e147]:
+    - generic [ref=f14e151]:
+      - button "Go back" [ref=f14e152] [cursor=pointer]
+      - generic [ref=f14e161]:
+        - 'heading "Air Job No: AEIN260053" [level=1] [ref=f14e163]'
+        - generic [ref=f14e164]: "Air Job No: AEIN260053"
+    - generic [ref=f14e172]:
+      - generic [ref=f14e173]:
+        - 'heading "Create Air Sale Bill On Account Amount: Select customer" [level=3] [ref=f14e174]':
+          - generic [ref=f14e175]: Create Air Sale Bill
+          - generic [ref=f14e176]:
+            - generic [ref=f14e177]: "On Account Amount:"
+            - generic [ref=f14e178]: Select customer
+        - generic [ref=f14e179]:
+          - generic [ref=f14e181]:
+            - generic [ref=f14e182]: Customer Name
+            - textbox "Customer Name" [ref=f14e185]:
+              - /placeholder: Search customer...
+          - generic [ref=f14e187]:
+            - generic [ref=f14e188]: Branch/Location
+            - textbox "Branch/Location" [ref=f14e191]:
+              - /placeholder: Select branch...
+        - generic [ref=f14e192]:
+          - generic [ref=f14e193]:
+            - text: GST Number
+            - textbox "GST No" [ref=f14e195]
+          - generic [ref=f14e196]:
+            - text: State
+            - textbox "State" [ref=f14e198]
+          - generic [ref=f14e200]:
+            - generic [ref=f14e201]: Bill Date
+            - generic [ref=f14e202]: 10/09/2026
+          - generic [ref=f14e209]:
+            - generic [ref=f14e210]: Is FL
+            - generic [ref=f14e211]:
+              - textbox "Is FL" [ref=f14e213]:
+                - /placeholder: Select...
+                - text: "No"
+              - img [aria-hidden] [ref=f14e214] [cursor=pointer]
+          - generic [ref=f14e218]:
+            - generic [ref=f14e219]: Show GST
+            - generic [ref=f14e220]:
+              - textbox "Show GST" [ref=f14e222]:
+                - /placeholder: Select...
+                - text: "Yes"
+              - img [aria-hidden] [ref=f14e223] [cursor=pointer]
+          - generic [ref=f14e227]:
+            - generic [ref=f14e228]: Hide Ex. Rate
+            - generic [ref=f14e229]:
+              - textbox "Hide Ex. Rate" [ref=f14e231]:
+                - /placeholder: Select...
+                - text: "No"
+              - img [aria-hidden] [ref=f14e232] [cursor=pointer]
+          - generic [ref=f14e236]:
+            - generic [ref=f14e237]: Bill Type
+            - generic [ref=f14e238]:
+              - textbox "Bill Type" [ref=f14e240]:
+                - /placeholder: Select...
+                - text: Regular Bill
+              - img [aria-hidden] [ref=f14e241] [cursor=pointer]
+          - generic [ref=f14e245]:
+            - generic [ref=f14e246]: Global Currency
+            - textbox "Global Currency" [ref=f14e249]:
+              - /placeholder: Currency...
+          - generic [ref=f14e250]:
+            - text: Global Ex. Rate
+            - textbox "Ex. rate" [ref=f14e252]
+        - generic [ref=f14e253]:
+          - generic [ref=f14e254]: Add Line Item
+          - generic [ref=f14e257]:
+            - generic [ref=f14e259]:
+              - generic [ref=f14e260]: Billing Head
+              - textbox "Billing Head" [ref=f14e263]:
+                - /placeholder: Select service...
+            - generic [ref=f14e264]:
+              - text: SAC Code
+              - textbox "SAC" [disabled] [ref=f14e266]
+            - generic [ref=f14e267]:
+              - text: Remarks
+              - textbox "Description" [ref=f14e269]
+          - generic [ref=f14e270]:
+            - generic [ref=f14e271]:
+              - text: Charges
+              - textbox "0.00" [ref=f14e273]: "1"
+            - generic [ref=f14e274]:
+              - text: Qty
+              - textbox "1" [ref=f14e276]
+            - generic [ref=f14e277]:
+              - text: Currency
+              - generic [ref=f14e279]:
+                - textbox [ref=f14e281]:
+                  - /placeholder: Currency
+                  - text: INR
+                - img [aria-hidden] [ref=f14e282] [cursor=pointer]
+            - generic [ref=f14e285]:
+              - text: Ex. Rate *
+              - textbox "1.00" [ref=f14e287]: "1"
+            - generic [ref=f14e288]:
+              - text: GST %
+              - combobox [ref=f14e289]:
+                - option "No GST"
+                - option "5%"
+                - option "12%"
+                - option "18%" [selected]
+                - option "28%"
+          - button "Add Item" [ref=f14e291] [cursor=pointer]
+      - generic [ref=f14e292]:
+        - generic [ref=f14e293]:
+          - heading "Bill Summary" [level=3] [ref=f14e294]
+          - generic [ref=f14e295]:
+            - generic [ref=f14e296]:
+              - generic [ref=f14e297]: Bill No.
+              - generic [ref=f14e298]: SE
+            - generic [ref=f14e299]:
+              - generic [ref=f14e300]: Total Charges
+              - generic [ref=f14e301]: "0.00"
+            - generic [ref=f14e302]:
+              - generic [ref=f14e303]: IGST Amount
+              - generic [ref=f14e304]: "+0.00"
+            - generic [ref=f14e305]:
+              - generic [ref=f14e306]: GST Amount
+              - generic [ref=f14e307]: "+0.00"
+            - generic [ref=f14e308]:
+              - generic [ref=f14e309]: GST Adjustment
+              - spinbutton "0.00" [ref=f14e311]
+            - generic [ref=f14e312]:
+              - generic [ref=f14e313]: Total Adjustment
+              - spinbutton "0.00" [ref=f14e315]
+            - generic [ref=f14e316]:
+              - generic [ref=f14e317]: Grand Total
+              - generic [ref=f14e318]: "0.00"
+          - generic [ref=f14e319]:
+            - button "Create Air Sale Bill" [disabled]
+        - generic [ref=f14e320]:
+          - heading "Quick Summary" [level=4] [ref=f14e322]
+          - generic [ref=f14e323]:
+            - generic [ref=f14e324]:
+              - generic [ref=f14e325]: Total Charges
+              - generic [ref=f14e326]: "0.00"
+            - generic [ref=f14e327]:
+              - generic [ref=f14e328]: GST Amount
+              - generic [ref=f14e329]: "+0.00"
+            - generic [ref=f14e330]:
+              - generic [ref=f14e331]: GST Adjustment
+              - generic [ref=f14e332]: "0.00"
+            - generic [ref=f14e333]:
+              - generic [ref=f14e334]: Total Adjustment
+              - generic [ref=f14e335]: "0.00"
+            - generic [ref=f14e336]:
+              - generic [ref=f14e337]: Grand Total
+              - generic [ref=f14e338]: "0.00"

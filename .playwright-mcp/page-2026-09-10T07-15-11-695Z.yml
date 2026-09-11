@@ -1,0 +1,87 @@
+- generic [ref=f9e3]:
+  - navigation [ref=f9e5]:
+    - generic [ref=f9e7]:
+      - link [ref=f9e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f9e10]
+      - generic [ref=f9e11]:
+        - button "🇮🇳 India" [ref=f9e12] [cursor=pointer]:
+          - generic [ref=f9e13]: 🇮🇳
+          - generic [ref=f9e14]: India
+        - button "Notifications" [ref=f9e18] [cursor=pointer]
+        - button "A" [ref=f9e23] [cursor=pointer]
+        - button [ref=f9e25] [cursor=pointer]
+  - generic [ref=f9e27]:
+    - generic [ref=f9e30]:
+      - generic [ref=f9e31]:
+        - button [ref=f9e32] [cursor=pointer]
+        - generic [ref=f9e41]:
+          - 'heading "Job Number: SIIN260171" [level=1] [ref=f9e42]'
+          - button "Click to Update Job No" [ref=f9e43] [cursor=pointer]
+          - generic [ref=f9e44]: "Booking No: BKG-TEST5"
+      - generic [ref=f9e49]:
+        - link [ref=f9e50] [cursor=pointer]:
+          - /url: /import/transactions/sale-bill?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32&bookingId=7e4dd17e-8ed4-4654-9498-a085630983e7
+          - button "Create Sale Bill" [ref=f9e51]
+        - link [ref=f9e52] [cursor=pointer]:
+          - /url: /import/transactions/purchase-bill?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32&bookingId=7e4dd17e-8ed4-4654-9498-a085630983e7
+          - button "Create Purchase Bill" [ref=f9e53]
+        - link [ref=f9e54] [cursor=pointer]:
+          - /url: /import/old-inv-cn/7e4dd17e-8ed4-4654-9498-a085630983e7?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32
+          - button "Old Inv CN" [ref=f9e55]
+        - button "Old Debit Note" [ref=f9e56] [cursor=pointer]
+        - button "Job Close" [ref=f9e57] [cursor=pointer]
+    - navigation [ref=f9e60]:
+      - generic [ref=f9e61]:
+        - button "Sale Bill" [ref=f9e62] [cursor=pointer]
+        - button "Purchase Bill" [ref=f9e67] [cursor=pointer]
+        - button "Documents" [ref=f9e72] [cursor=pointer]
+        - button "Old Credit Note" [ref=f9e77] [cursor=pointer]
+        - button "Old Debit Note" [ref=f9e82] [cursor=pointer]
+      - generic [ref=f9e87]:
+        - generic [ref=f9e93]:
+          - generic [ref=f9e94]: Total Sale
+          - generic [ref=f9e95]: ₹0.00
+          - generic [ref=f9e96]: "With GST: ₹0.00"
+        - generic [ref=f9e103]:
+          - generic [ref=f9e104]: Total Purchase
+          - generic [ref=f9e105]: ₹115.00
+          - generic [ref=f9e106]: "With GST: ₹135.70"
+          - generic [ref=f9e107]: "GST: ₹20.70"
+        - generic [ref=f9e113]:
+          - generic [ref=f9e114]: Loss (0.0%)
+          - generic [ref=f9e115]:
+            - generic [ref=f9e116]: ₹115.00
+            - generic [ref=f9e117]: "Incl GST: ₹135.70"
+            - generic [ref=f9e118]: "Excl GST: ₹115.00"
+    - generic [ref=f9e124]:
+      - table [ref=f9e127]:
+        - rowgroup [ref=f9e128]:
+          - row [ref=f9e129]:
+            - columnheader "Bill No" [ref=f9e130]
+            - columnheader "Bill Date" [ref=f9e131]
+            - columnheader "Party Details" [ref=f9e132]
+            - columnheader "Job Info" [ref=f9e133]
+            - columnheader "Items" [ref=f9e134]
+            - columnheader "Credit Notes" [ref=f9e135]
+            - columnheader "Total Amount" [ref=f9e136]
+            - columnheader "Adjustment" [ref=f9e137]
+            - columnheader "GST Amount" [ref=f9e138]
+            - columnheader "Grand Total" [ref=f9e139]
+            - columnheader "UPdated By" [ref=f9e140]
+            - columnheader "Status" [ref=f9e141]
+            - columnheader "Payment Status" [ref=f9e142]
+            - columnheader [ref=f9e143]
+        - rowgroup [ref=f9e145]:
+          - row [ref=f9e146]:
+            - cell [ref=f9e147]:
+              - generic [ref=f9e148]:
+                - paragraph [ref=f9e149]: No sale bills found
+                - paragraph [ref=f9e150]: No sale bills have been created for this booking yet.
+      - generic [ref=f9e152]:
+        - generic [ref=f9e153]: Showing 1 to 0 of 0 entries
+        - generic [ref=f9e154]:
+          - button "Previous" [disabled] [ref=f9e155]
+          - button "1" [ref=f9e156] [cursor=pointer]
+          - button "Next" [disabled] [ref=f9e157]
+    - button [ref=f9e159] [cursor=pointer]

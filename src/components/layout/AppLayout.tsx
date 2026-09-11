@@ -27,6 +27,7 @@ import {
   Activity,
   AlertCircle,
   Boxes,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../auth-provider";
 import { useTheme } from "../theme-provider";
@@ -86,6 +87,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         { label: "Awaiting Testing", href: "/issues?status=FIXED", icon: Clock },
         { label: "Testing in Progress", href: "/issues?status=TESTING_IN_PROGRESS", icon: Activity },
         { label: "Regression Testing", href: "/issues?status=TESTED", icon: FileCheck },
+        { label: "Deleted Issues", href: "/issues/deleted", icon: Trash2 },
       ],
     },
     {

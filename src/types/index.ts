@@ -22,6 +22,8 @@ export type TestResult = 'PASS' | 'FAIL';
 
 export type RegressionResult = 'PASS' | 'FAIL';
 
+export type PublicationStatus = 'DRAFT' | 'PUBLISHED';
+
 export type NotificationType =
   | 'ISSUE_ASSIGNED'
   | 'STATUS_CHANGED'
@@ -35,7 +37,8 @@ export type NotificationType =
   | 'DEADLINE_10_MIN'
   | 'DEADLINE_OVERDUE'
   | 'COMMENT_ADDED'
-  | 'ADMIN_ALERT';
+  | 'ADMIN_ALERT'
+  | 'ISSUE_DELETED';
 
 export interface UserSession {
   id: string;
@@ -67,6 +70,7 @@ export interface IssueListItem {
   environment: Environment;
   priority: Priority;
   status: IssueStatus;
+  publicationStatus?: PublicationStatus;
   jobUrl?: string | null;
   createdById: string;
   createdByName: string;
@@ -78,6 +82,16 @@ export interface IssueListItem {
   deadlineTimestamp?: string | null;
   isOverdue: boolean;
   reopenCount: number;
+  deletedAt?: string | null;
+  deletedById?: string | null;
+  deletedBy?: {
+    id: string;
+    name: string;
+    email: string;
+    role: Role;
+    profileImage?: string | null;
+  } | null;
+  deleteRemark?: string | null;
   createdAt: string;
   updatedAt: string;
 }

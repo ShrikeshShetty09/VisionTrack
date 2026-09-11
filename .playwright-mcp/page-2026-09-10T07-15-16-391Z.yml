@@ -1,0 +1,188 @@
+- generic [ref=f9e3]:
+  - navigation [ref=f9e5]:
+    - generic [ref=f9e7]:
+      - link [ref=f9e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f9e10]
+      - generic [ref=f9e11]:
+        - button "🇮🇳 India" [ref=f9e12] [cursor=pointer]:
+          - generic [ref=f9e13]: 🇮🇳
+          - generic [ref=f9e14]: India
+        - button "Notifications" [ref=f9e18] [cursor=pointer]
+        - button "A" [ref=f9e23] [cursor=pointer]
+        - button [ref=f9e25] [cursor=pointer]
+  - generic [ref=f9e160]:
+    - generic [ref=f9e164]:
+      - button [ref=f9e165] [cursor=pointer]
+      - generic [ref=f9e174]:
+        - 'heading "Job Number: SIIN260171" [level=1] [ref=f9e175]'
+        - generic [ref=f9e176]: "Booking No: BKG-TEST5"
+    - generic [ref=f9e184]:
+      - generic [ref=f9e185]:
+        - generic [ref=f9e186]:
+          - 'heading "Create new sale bill On Account Amount: Select a customer" [level=3] [ref=f9e187]':
+            - generic [ref=f9e188]: Create new sale bill
+            - generic [ref=f9e189]:
+              - generic [ref=f9e190]: "On Account Amount:"
+              - generic [ref=f9e191]: Select a customer
+          - generic [ref=f9e192]:
+            - generic [ref=f9e194]:
+              - generic [ref=f9e195]: Customer Name
+              - textbox "Customer Name" [ref=f9e198]:
+                - /placeholder: Search customer...
+            - generic [ref=f9e200]:
+              - generic [ref=f9e201]: Branch/Location
+              - textbox "Branch/Location" [ref=f9e204]:
+                - /placeholder: Select branch...
+            - generic [ref=f9e206]:
+              - generic [ref=f9e207]: Is FL *
+              - generic [ref=f9e208]:
+                - textbox "Is FL *" [ref=f9e210]:
+                  - /placeholder: Select...
+                  - text: "No"
+                - img [aria-hidden] [ref=f9e211] [cursor=pointer]
+            - generic [ref=f9e215]:
+              - generic [ref=f9e216]: Is Console Job *
+              - generic [ref=f9e217]:
+                - textbox "Is Console Job *" [ref=f9e219]:
+                  - /placeholder: Select...
+                  - text: "No"
+                - img [aria-hidden] [ref=f9e220] [cursor=pointer]
+            - generic [ref=f9e224]:
+              - generic [ref=f9e225]: Bill Type *
+              - generic [ref=f9e226]:
+                - textbox "Bill Type *" [ref=f9e228]:
+                  - /placeholder: Select...
+                  - text: Regular Bill
+                - img [aria-hidden] [ref=f9e229] [cursor=pointer]
+            - generic [ref=f9e233]:
+              - generic [ref=f9e234]: FTZ
+              - generic [ref=f9e235]:
+                - textbox "FTZ" [ref=f9e237]:
+                  - /placeholder: FTZ (Yes/No)
+                  - text: "No"
+                - img [aria-hidden] [ref=f9e238] [cursor=pointer]
+        - generic [ref=f9e242]:
+          - generic [ref=f9e243]:
+            - text: GST Number
+            - textbox "GST Number" [ref=f9e245]:
+              - /placeholder: GST No
+          - generic [ref=f9e246]:
+            - text: State
+            - textbox "State" [ref=f9e248]
+          - generic [ref=f9e249]:
+            - text: Bill Date
+            - generic [ref=f9e250]: 10/09/2026
+          - generic [ref=f9e261]:
+            - generic [ref=f9e262]: Show GST *
+            - generic [ref=f9e263]:
+              - textbox "Show GST *" [ref=f9e265]:
+                - /placeholder: Select...
+                - text: "Yes"
+              - img [aria-hidden] [ref=f9e266] [cursor=pointer]
+          - generic [ref=f9e270]:
+            - generic [ref=f9e271]: Hide Ex. Rate *
+            - generic [ref=f9e272]:
+              - textbox "Hide Ex. Rate *" [ref=f9e274]:
+                - /placeholder: Select...
+                - text: "No"
+              - img [aria-hidden] [ref=f9e275] [cursor=pointer]
+          - generic [ref=f9e279]:
+            - generic [ref=f9e280]: Global Currency
+            - textbox "Global Currency" [ref=f9e283]:
+              - /placeholder: Currency...
+          - generic [ref=f9e284]:
+            - text: Global Ex. Rate
+            - textbox "Global Ex. Rate" [ref=f9e286]:
+              - /placeholder: Ex. rate
+          - generic [ref=f9e287]:
+            - text: Remarks
+            - textbox "Remarks" [ref=f9e289]
+        - group "Containers on Invoice" [ref=f9e290]:
+          - generic [ref=f9e293] [cursor=pointer]:
+            - checkbox "Unnamed container" [checked] [ref=f9e294]
+            - text: Unnamed container
+        - generic [ref=f9e295]:
+          - generic [ref=f9e296]: Add Line Item
+          - generic [ref=f9e299]:
+            - generic [ref=f9e301]:
+              - generic [ref=f9e302]: Billing Head
+              - textbox "Billing Head" [ref=f9e305]:
+                - /placeholder: Select service...
+            - generic [ref=f9e306]:
+              - text: SAC Code
+              - textbox "SAC" [disabled] [ref=f9e308]
+            - generic [ref=f9e309]:
+              - text: Remarks
+              - textbox "Description" [ref=f9e311]
+          - generic [ref=f9e312]:
+            - generic [ref=f9e313]:
+              - text: Charges
+              - textbox "0.00" [ref=f9e315]: "1"
+            - generic [ref=f9e316]:
+              - text: Qty
+              - textbox "1" [ref=f9e318]
+            - generic [ref=f9e319]:
+              - text: Currency
+              - generic [ref=f9e321]:
+                - textbox [ref=f9e323]:
+                  - /placeholder: Currency
+                  - text: INR
+                - img [aria-hidden] [ref=f9e324] [cursor=pointer]
+            - generic [ref=f9e327]:
+              - text: Ex. Rate *
+              - textbox "1.0000" [ref=f9e329]: "1"
+            - generic [ref=f9e330]:
+              - text: GST %
+              - combobox [ref=f9e331]:
+                - option "No GST"
+                - option "5%"
+                - option "12%"
+                - option "18%" [selected]
+                - option "28%"
+          - button "Add Item" [ref=f9e333] [cursor=pointer]
+      - generic [ref=f9e334]:
+        - generic [ref=f9e335]:
+          - heading "Bill Summary" [level=3] [ref=f9e337]
+          - generic [ref=f9e338]:
+            - generic [ref=f9e339]:
+              - generic [ref=f9e340]: Total Charges
+              - generic [ref=f9e341]: "0.00"
+            - generic [ref=f9e342]:
+              - generic [ref=f9e343]: IGST Amount
+              - generic [ref=f9e344]: "+0.00"
+            - generic [ref=f9e345]:
+              - generic [ref=f9e346]: GST Amount
+              - generic [ref=f9e347]: "+0.00"
+            - generic [ref=f9e348]:
+              - generic [ref=f9e349]: GST Adjustment
+              - spinbutton "GST Adjustment" [ref=f9e351]
+            - generic [ref=f9e352]:
+              - generic [ref=f9e353]: Total Adjustment
+              - spinbutton "Total Adjustment" [ref=f9e355]
+            - generic [ref=f9e356]:
+              - generic [ref=f9e357]: Grand Total
+              - generic [ref=f9e358]: "0.00"
+          - generic [ref=f9e359]:
+            - button "Create Sale Bill" [disabled]
+        - generic [ref=f9e360]:
+          - heading "Quick Summary" [level=4] [ref=f9e362]
+          - generic [ref=f9e363]:
+            - generic [ref=f9e364]:
+              - generic [ref=f9e365]: Total Charges
+              - generic [ref=f9e366]: "0.00"
+            - generic [ref=f9e367]:
+              - generic [ref=f9e368]: GST Amount
+              - generic [ref=f9e369]: "+0.00"
+            - generic [ref=f9e370]:
+              - generic [ref=f9e371]: GST Adjustment
+              - generic [ref=f9e372]: "0.00"
+            - generic [ref=f9e373]:
+              - generic [ref=f9e374]: Total Adjustment
+              - generic [ref=f9e375]: "0.00"
+            - generic [ref=f9e376]:
+              - generic [ref=f9e377]: Grand Total
+              - generic [ref=f9e378]: "0.00"
+            - generic [ref=f9e379]:
+              - generic [ref=f9e380]: Rounded Grand Total
+              - generic [ref=f9e381]: "0.00"

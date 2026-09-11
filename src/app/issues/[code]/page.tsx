@@ -27,6 +27,9 @@ import {
   AlertCircle,
   Send,
   Copy,
+  Edit3,
+  Trash2,
+  Globe,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/components/auth-provider";
@@ -35,6 +38,8 @@ import { DeveloperFixModal } from "@/components/issues/DeveloperFixModal";
 import { TesterTestingModal } from "@/components/issues/TesterTestingModal";
 import { TesterRegressionModal } from "@/components/issues/TesterRegressionModal";
 import { AssignDeveloperModal } from "@/components/issues/AssignDeveloperModal";
+import { DeleteIssueModal } from "@/components/issues/DeleteIssueModal";
+import { EditIssueModal } from "@/components/issues/EditIssueModal";
 import { IssueTimeline } from "@/components/issues/IssueTimeline";
 import { triggerActionUpdate } from "@/lib/events";
 
@@ -67,6 +72,8 @@ export default function IssueDetailPage() {
   const [showTestingModal, setShowTestingModal] = useState(false);
   const [showRegressionModal, setShowRegressionModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const fetchIssueDetail = async (silent = false) => {
     if (!code) return;
@@ -87,7 +94,59 @@ export default function IssueDetailPage() {
     }
   };
 
-  const anyModalOpen = showAssignModal || showFixModal || showTestingModal || showRegressionModal;
+  const handleTogglePublicationStatus = async () => {
+    if (!issue) return;
+    const nextStatus = issue.publicationStatus === "DRAFT" ? "PUBLISHED" : "DRAFT";
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/issues/${issue.issueCode}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SET_PUBLICATION_STATUS",
+          publicationStatus: nextStatus,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update publication status");
+      setIssue((prev: any) => ({ ...prev, publicationStatus: nextStatus }));
+      showToast(`Issue status changed to ${nextStatus}!`);
+      triggerActionUpdate();
+    } catch (err: any) {
+      showToast(err.message || "Failed to update publication status", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRestoreIssue = async () => {
+    if (!issue) return;
+    try {
+      setActionLoading(true);
+      const res = await fetch(`/api/issues/${issue.issueCode}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "RESTORE_ISSUE" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to restore issue");
+      setIssue((prev: any) => ({ ...prev, deletedAt: null, deletedById: null, deleteRemark: null }));
+      showToast("Issue restored back to active!");
+      triggerActionUpdate();
+    } catch (err: any) {
+      showToast(err.message || "Failed to restore issue", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const anyModalOpen =
+    showAssignModal ||
+    showFixModal ||
+    showTestingModal ||
+    showRegressionModal ||
+    showDeleteModal ||
+    showEditModal;
   const anyModalOpenRef = React.useRef(anyModalOpen);
   anyModalOpenRef.current = anyModalOpen;
 
@@ -253,6 +312,43 @@ export default function IssueDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
+      {/* Soft-Deleted Alert Banner */}
+      {issue.deletedAt && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="h-10 w-10 rounded-xl bg-red-100 dark:bg-red-900/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 border border-red-200 dark:border-red-800">
+              <Trash2 className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-red-900 dark:text-red-200">This Issue is Soft-Deleted</h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-red-200 dark:bg-red-900/80 text-red-800 dark:text-red-200 border border-red-300 dark:border-red-800">
+                  Archived
+                </span>
+              </div>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
+                Deleted on {formatDate(issue.deletedAt)} by {issue.deletedBy?.name || "Tester"} ({issue.deletedBy?.role || "QA"}).
+              </p>
+              {issue.deleteRemark && (
+                <p className="text-xs font-semibold text-red-950 dark:text-red-100 mt-1.5 bg-white/70 dark:bg-black/40 p-2.5 rounded-xl border border-red-200 dark:border-red-800/60">
+                  Reason for Deletion: &ldquo;{issue.deleteRemark}&rdquo;
+                </p>
+              )}
+            </div>
+          </div>
+          {isTester && (
+            <button
+              onClick={handleRestoreIssue}
+              disabled={actionLoading}
+              className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 transition shrink-0"
+            >
+              <RotateCcw className="h-4 w-4" />
+              <span>Restore Issue</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Top Breadcrumb & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -262,10 +358,19 @@ export default function IssueDetailPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-base font-black px-2.5 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
               {issue.issueCode}
             </span>
+            {issue.publicationStatus === "DRAFT" ? (
+              <span className="text-xs px-2.5 py-1 rounded-full border font-bold bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800">
+                Draft
+              </span>
+            ) : (
+              <span className="text-xs px-2.5 py-1 rounded-full border font-bold bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800">
+                Published
+              </span>
+            )}
             <span className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${priorityBadge.bg}`}>
               {priorityBadge.indicator} {priorityBadge.label}
             </span>
@@ -283,19 +388,61 @@ export default function IssueDetailPage() {
 
         {/* Action Controls for Tester / Developer */}
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Tester / Admin Assignment */}
+          {/* TESTER & ADMIN CONTROLS */}
           {isTester && (
-            <button
-              onClick={() => setShowAssignModal(true)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
-            >
-              <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
-              <span>
-                {(issue.assignees && issue.assignees.length > 0) || issue.assignedDeveloper
-                  ? "Reassign / Deadline"
-                  : "Assign Users"}
-              </span>
-            </button>
+            <>
+              {/* Publication Status Toggle */}
+              <button
+                onClick={handleTogglePublicationStatus}
+                disabled={actionLoading}
+                className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition shadow-sm ${
+                  issue.publicationStatus === "DRAFT"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                    : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-800 hover:bg-amber-100"
+                }`}
+                title={
+                  issue.publicationStatus === "DRAFT"
+                    ? "Publish this issue to make it visible to developers"
+                    : "Revert this issue back to draft"
+                }
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span>{issue.publicationStatus === "DRAFT" ? "Publish Issue" : "Revert to Draft"}</span>
+              </button>
+
+              {/* Edit Issue Details */}
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+              >
+                <Edit3 className="h-3.5 w-3.5 text-blue-500" />
+                <span>Edit Issue</span>
+              </button>
+
+              {/* Delete Issue (Soft Delete) */}
+              {!issue.deletedAt && (
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="px-3 py-1.5 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/40 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Delete</span>
+                </button>
+              )}
+
+              {/* Tester / Admin Assignment */}
+              <button
+                onClick={() => setShowAssignModal(true)}
+                className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+              >
+                <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
+                <span>
+                  {(issue.assignees && issue.assignees.length > 0) || issue.assignedDeveloper
+                    ? "Reassign / Deadline"
+                    : "Assign Users"}
+                </span>
+              </button>
+            </>
           )}
 
           {/* DEVELOPER ACTIONS */}
@@ -1004,6 +1151,38 @@ export default function IssueDetailPage() {
             await fetchIssueDetail(true);
             triggerActionUpdate();
             showToast("Assignees and deadline updated successfully!");
+          }}
+        />
+      )}
+
+      {/* Edit Issue Modal (Tester & Admin) */}
+      {showEditModal && (
+        <EditIssueModal
+          isOpen={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          issue={issue}
+          onSuccess={async (updated) => {
+            setIssue((prev: any) => ({ ...prev, ...updated }));
+            showToast("Issue details updated successfully!");
+            await fetchIssueDetail(true);
+            triggerActionUpdate();
+          }}
+        />
+      )}
+
+      {/* Soft Delete Issue Modal (Tester & Admin) */}
+      {showDeleteModal && (
+        <DeleteIssueModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          issueCode={issue.issueCode}
+          issueTitle={issue.title}
+          hasAssignedDev={Boolean(
+            issue.assignedDeveloperId || (issue.assignees && issue.assignees.length > 0)
+          )}
+          onSuccess={() => {
+            showToast(`Issue ${issue.issueCode} moved to Deleted Issues archive.`);
+            router.push("/issues");
           }}
         />
       )}

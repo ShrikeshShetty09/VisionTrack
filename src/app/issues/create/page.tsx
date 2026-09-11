@@ -42,6 +42,7 @@ export default function CreateIssuePage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [deadlineDate, setDeadlineDate] = useState("");
   const [deadlineTime, setDeadlineTime] = useState("18:30");
+  const [publicationStatus, setPublicationStatus] = useState<"DRAFT" | "PUBLISHED">("PUBLISHED");
 
   // Auxiliary data
   const [softwareList, setSoftwareList] = useState<any[]>([]);
@@ -174,8 +175,8 @@ export default function CreateIssuePage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, overrideStatus?: "DRAFT" | "PUBLISHED") => {
+    if (e) e.preventDefault();
     if (!title.trim()) {
       setError("Issue title is required.");
       return;
@@ -188,6 +189,8 @@ export default function CreateIssuePage() {
       setError("Please select a software system.");
       return;
     }
+
+    const finalPublicationStatus = overrideStatus || publicationStatus;
 
     setSubmitting(true);
     setError("");
@@ -212,6 +215,7 @@ export default function CreateIssuePage() {
           moduleId: moduleId || null,
           environment,
           priority,
+          publicationStatus: finalPublicationStatus,
           jobUrl,
           assignedDeveloperIds,
           assignedDeveloperId: assignedDeveloperIds[0] || null,
@@ -667,31 +671,52 @@ export default function CreateIssuePage() {
         </div>
 
         {/* Form Actions */}
-        <div className="flex items-center justify-end gap-3 pt-2">
-          <Link
-            href="/issues"
-            className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-          >
-            Cancel
-          </Link>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-amber-600 dark:text-amber-400">Draft:</span> Only Testers/Admins can see it.{" "}
+            <span className="font-semibold text-blue-600 dark:text-blue-400">Publish:</span> Assignees are notified immediately.
+          </div>
 
-          <button
-            type="submit"
-            disabled={submitting || uploading}
-            className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
-          >
-            {submitting ? (
-              <>
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <Link
+              href="/issues"
+              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            >
+              Cancel
+            </Link>
+
+            <button
+              type="button"
+              disabled={submitting || uploading}
+              onClick={() => handleSubmit(undefined, "DRAFT")}
+              className="px-4 py-2.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-amber-900/50 transition flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Creating Issue...</span>
-              </>
-            ) : (
-              <>
-                <PlusCircle className="h-4 w-4" />
-                <span>Publish Quality Issue</span>
-              </>
-            )}
-          </button>
+              ) : (
+                <span>Save as Draft</span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              disabled={submitting || uploading}
+              onClick={() => handleSubmit(undefined, "PUBLISHED")}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 transition flex items-center gap-2 disabled:opacity-50"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Creating Issue...</span>
+                </>
+              ) : (
+                <>
+                  <PlusCircle className="h-4 w-4" />
+                  <span>Create &amp; Publish</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
     </div>

@@ -1,0 +1,154 @@
+- generic [ref=f15e3]:
+  - navigation [ref=f15e5]:
+    - generic [ref=f15e7]:
+      - link [ref=f15e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f15e10]
+      - generic [ref=f15e11]:
+        - button "🇮🇳 India" [ref=f15e12] [cursor=pointer]:
+          - generic [ref=f15e13]: 🇮🇳
+          - generic [ref=f15e14]: India
+        - button "Notifications" [ref=f15e18] [cursor=pointer]
+        - button "A" [ref=f15e23] [cursor=pointer]
+        - button [ref=f15e25] [cursor=pointer]
+  - generic [ref=f15e27]:
+    - generic [ref=f15e31]:
+      - button [ref=f15e32] [cursor=pointer]
+      - 'heading "Booking No: N/A" [level=1] [ref=f15e42]'
+    - generic [ref=f15e46]:
+      - generic [ref=f15e47]:
+        - generic [ref=f15e48]:
+          - 'heading "Create new purchase bill On Account Amount: Select a vendor" [level=3] [ref=f15e49]':
+            - generic [ref=f15e50]: Create new purchase bill
+            - generic [ref=f15e51]:
+              - generic [ref=f15e52]: "On Account Amount:"
+              - generic [ref=f15e53]: Select a vendor
+          - generic [ref=f15e54]:
+            - generic [ref=f15e55]:
+              - text: Vendor Bill Number
+              - textbox "Vendor Bill Number" [ref=f15e57]:
+                - /placeholder: Bill No
+            - generic [ref=f15e59]:
+              - generic [ref=f15e60]: Vendor Name
+              - textbox "Vendor Name" [ref=f15e63]:
+                - /placeholder: Search vendor...
+            - generic [ref=f15e65]:
+              - generic [ref=f15e66]: Branch/Location
+              - textbox "Branch/Location" [ref=f15e69]:
+                - /placeholder: Select branch...
+            - generic [ref=f15e71]:
+              - generic [ref=f15e72]: Bill Given By
+              - textbox "Bill Given By" [ref=f15e75]:
+                - /placeholder: Person...
+        - generic [ref=f15e77]:
+          - generic [ref=f15e78]:
+            - text: GST Number
+            - textbox "GST Number" [ref=f15e80]:
+              - /placeholder: GST No
+          - generic [ref=f15e81]:
+            - text: State
+            - textbox "State" [ref=f15e83]
+          - generic [ref=f15e84]:
+            - text: Bill Date
+            - generic [ref=f15e85]: Bill date
+          - generic [ref=f15e93]:
+            - generic [ref=f15e94]: Is Proforma
+            - generic [ref=f15e95]:
+              - textbox "Is Proforma" [ref=f15e97]:
+                - /placeholder: Select...
+                - text: "Yes"
+              - img [aria-hidden] [ref=f15e98] [cursor=pointer]
+          - generic [ref=f15e102]:
+            - generic [ref=f15e103]: Show GST
+            - generic [ref=f15e104]:
+              - textbox "Show GST" [ref=f15e106]:
+                - /placeholder: Select...
+                - text: "Yes"
+              - img [aria-hidden] [ref=f15e107] [cursor=pointer]
+          - generic [ref=f15e111]:
+            - generic [ref=f15e112]: Is FL
+            - generic [ref=f15e113]:
+              - textbox "Is FL" [ref=f15e115]:
+                - /placeholder: Select...
+                - text: "No"
+              - img [aria-hidden] [ref=f15e116] [cursor=pointer]
+          - generic [ref=f15e120]:
+            - generic [ref=f15e121]: Global Curr
+            - textbox "Global Curr" [ref=f15e124]:
+              - /placeholder: Currency...
+          - generic [ref=f15e125]:
+            - text: Global Ex. Rate
+            - textbox "Global Ex. Rate" [ref=f15e127]:
+              - /placeholder: Ex. rate
+          - generic [ref=f15e129]:
+            - generic [ref=f15e130]: FTZ
+            - generic [ref=f15e131]:
+              - textbox "FTZ" [ref=f15e133]:
+                - /placeholder: Type Yes or No...
+                - text: "No"
+              - img [aria-hidden] [ref=f15e134] [cursor=pointer]
+          - generic [ref=f15e137]:
+            - text: Remarks
+            - textbox "Remarks" [ref=f15e139]:
+              - /placeholder: Enter remarks
+        - generic [ref=f15e140]:
+          - generic [ref=f15e141]: Add Line Item
+          - generic [ref=f15e144]:
+            - generic [ref=f15e146]:
+              - generic [ref=f15e147]: Billing Head
+              - textbox "Billing Head" [ref=f15e150]:
+                - /placeholder: Select service...
+            - generic [ref=f15e151]:
+              - text: SAC Code
+              - textbox "SAC" [disabled] [ref=f15e153]
+            - generic [ref=f15e154]:
+              - text: Remarks
+              - textbox "Description" [ref=f15e156]
+          - generic [ref=f15e157]:
+            - generic [ref=f15e158]:
+              - text: Charges
+              - textbox "0.00" [ref=f15e160]: "1.00"
+            - generic [ref=f15e161]:
+              - text: Qty
+              - textbox "1" [ref=f15e163]: "1.00"
+            - generic [ref=f15e164]:
+              - text: Currency
+              - generic [ref=f15e166]:
+                - textbox [ref=f15e168]:
+                  - /placeholder: Currency
+                - img [aria-hidden] [ref=f15e169] [cursor=pointer]
+            - generic [ref=f15e172]:
+              - text: Ex. Rate *
+              - textbox "1.00" [ref=f15e174]: "1.0000"
+            - generic [ref=f15e175]:
+              - text: GST %
+              - combobox [ref=f15e176]:
+                - option "No GST"
+                - option "5.00%"
+                - option "12.00%"
+                - option "18.00%" [selected]
+                - option "28.00%"
+          - button "Add Item" [ref=f15e178] [cursor=pointer]
+      - generic [ref=f15e180]:
+        - heading "Bill Summary" [level=3] [ref=f15e182]
+        - generic [ref=f15e183]:
+          - generic [ref=f15e184]:
+            - generic [ref=f15e185]: Total Charges
+            - generic [ref=f15e186]: "0.00"
+          - generic [ref=f15e187]:
+            - generic [ref=f15e188]: IGST Amount
+            - generic [ref=f15e189]: "+0.00"
+          - generic [ref=f15e190]:
+            - generic [ref=f15e191]: GST Amount
+            - generic [ref=f15e192]: "+0.00"
+          - generic [ref=f15e193]:
+            - generic [ref=f15e194]: GST Adjustment
+            - spinbutton "GST Adjustment" [ref=f15e196]
+          - generic [ref=f15e197]:
+            - generic [ref=f15e198]: Total Adjustment
+            - spinbutton "Total Adjustment" [ref=f15e200]
+          - generic [ref=f15e201]:
+            - generic [ref=f15e202]: Grand Total
+            - generic [ref=f15e203]: "0.00"
+        - generic [ref=f15e204]:
+          - button "Create Purchase Bill" [disabled]

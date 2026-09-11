@@ -1,0 +1,356 @@
+- generic [ref=f6e3]:
+  - navigation [ref=f6e5]:
+    - generic [ref=f6e7]:
+      - link [ref=f6e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f6e10]
+      - generic [ref=f6e11]:
+        - button "🇮🇳 India" [ref=f6e12] [cursor=pointer]:
+          - generic [ref=f6e13]: 🇮🇳
+          - generic [ref=f6e14]: India
+        - button "Notifications" [ref=f6e18] [cursor=pointer]
+        - button "A" [ref=f6e23] [cursor=pointer]
+        - button [ref=f6e25] [cursor=pointer]
+  - generic [ref=f6e28]:
+    - generic [ref=f6e29]:
+      - generic [ref=f6e30]:
+        - heading "Dashboard" [level=1] [ref=f6e31]
+        - paragraph [ref=f6e32]: Welcome back! Here's what's happening today.
+      - generic [ref=f6e33]:
+        - button "Booking Analytics" [ref=f6e34] [cursor=pointer]
+        - button "Refresh All" [ref=f6e35] [cursor=pointer]
+    - generic [ref=f6e36]:
+      - generic [ref=f6e39]:
+        - paragraph [ref=f6e40]: Total Bookings
+        - paragraph [ref=f6e41]: "0"
+        - generic [ref=f6e42]: 0 Active
+      - generic [ref=f6e51]:
+        - paragraph [ref=f6e52]: Active Shipments
+        - paragraph [ref=f6e53]: "0"
+        - generic [ref=f6e54]: 0 Delayed
+      - generic [ref=f6e63]:
+        - paragraph [ref=f6e64]: Documents
+        - paragraph [ref=f6e65]: "0"
+        - generic [ref=f6e66]: 0% Complete
+      - generic [ref=f6e74]:
+        - paragraph [ref=f6e75]: Revenue MTD
+        - paragraph [ref=f6e76]: ₹0
+    - generic [ref=f6e80]:
+      - generic [ref=f6e81]:
+        - generic [ref=f6e82]:
+          - paragraph [ref=f6e83]: Sales Bill Type
+          - generic [ref=f6e84]:
+            - button "Sea Export" [ref=f6e85] [cursor=pointer]
+            - button "Sea Import" [ref=f6e86] [cursor=pointer]
+            - button "Air Export" [ref=f6e87] [cursor=pointer]
+            - button "Air Import" [ref=f6e88] [cursor=pointer]
+            - button "Local Job" [ref=f6e89] [cursor=pointer]
+        - generic [ref=f6e91]:
+          - generic [ref=f6e92]:
+            - generic [ref=f6e93]:
+              - heading "Pending Bills" [level=3] [ref=f6e94]
+              - paragraph [ref=f6e95]: Sea Export jobs with sale or purchase bills
+            - generic [ref=f6e96]:
+              - generic [ref=f6e97]: "0"
+              - button [disabled]
+              - button "Send to All" [disabled]
+              - button "View All" [ref=f6e98] [cursor=pointer]
+          - generic [ref=f6e99]: Loading pending sales bills...
+      - generic [ref=f6e102]:
+        - generic [ref=f6e103]:
+          - heading "Disputes Overview" [level=3] [ref=f6e104]
+          - generic [ref=f6e107]: 6 Total
+        - generic [ref=f6e108]:
+          - link "THIS IS DISPUTE TITLE ADDED Pending USD542 • MG2627-0023 05/08/2026" [ref=f6e109] [cursor=pointer]:
+            - /url: /booking-detail/a2ec0ecd-e8a4-4c83-9a6c-4d63d5b50462?jobId=7c90d930-4c42-4f87-b6fe-77922006e154
+            - generic [ref=f6e110]:
+              - generic [ref=f6e111]:
+                - generic "THIS IS DISPUTE TITLE" [ref=f6e112]
+                - generic "ADDED" [ref=f6e113]
+              - generic [ref=f6e114]: Pending
+            - generic [ref=f6e115]:
+              - generic [ref=f6e116]:
+                - generic [ref=f6e117]: USD542
+                - generic [ref=f6e118]: • MG2627-0023
+              - generic [ref=f6e119]: 05/08/2026
+          - link "THIS IS DISPUTE TITLE 453 Pending USD543 • OE260128 04/08/2026" [ref=f6e120] [cursor=pointer]:
+            - /url: /booking-detail/15d49805-f407-4b97-860b-f755b60ffd46?jobId=079febca-2d48-4223-80ef-483bd6817ab9
+            - generic [ref=f6e121]:
+              - generic [ref=f6e122]:
+                - generic "THIS IS DISPUTE TITLE" [ref=f6e123]
+                - generic "453" [ref=f6e124]
+              - generic [ref=f6e125]: Pending
+            - generic [ref=f6e126]:
+              - generic [ref=f6e127]:
+                - generic [ref=f6e128]: USD543
+                - generic [ref=f6e129]: • OE260128
+              - generic [ref=f6e130]: 04/08/2026
+          - link "TEST TRANSACTION COMPLETED Approved USD100 • SEIN260163 02/04/2026" [ref=f6e131] [cursor=pointer]:
+            - /url: /booking-detail/5f91d5aa-8d7b-45e7-aa8a-cb0595831095?jobId=23a1a248-f498-4aec-b349-73284df3d470
+            - generic [ref=f6e132]:
+              - generic [ref=f6e133]:
+                - generic "TEST" [ref=f6e134]
+                - generic "TRANSACTION COMPLETED" [ref=f6e135]
+              - generic [ref=f6e136]: Approved
+            - generic [ref=f6e137]:
+              - generic [ref=f6e138]:
+                - generic [ref=f6e139]: USD100
+                - generic [ref=f6e140]: • SEIN260163
+              - generic [ref=f6e141]: 02/04/2026
+          - link "THIS IS DISPUTE TITLE ADDED Pending USD65 • MG2627-0024 06/08/2026" [ref=f6e142] [cursor=pointer]:
+            - /url: /booking-detail/67630bc4-7e24-4980-8e7a-6799c0c65813?jobId=3f2de08d-3bf8-41a9-87b3-c3b6f35e5900
+            - generic [ref=f6e143]:
+              - generic [ref=f6e144]:
+                - generic "THIS IS DISPUTE TITLE" [ref=f6e145]
+                - generic "ADDED" [ref=f6e146]
+              - generic [ref=f6e147]: Pending
+            - generic [ref=f6e148]:
+              - generic [ref=f6e149]:
+                - generic [ref=f6e150]: USD65
+                - generic [ref=f6e151]: • MG2627-0024
+              - generic [ref=f6e152]: 06/08/2026
+          - link "THIS IS DISPUTE TITLE ADDED Pending USD63 • SEIN260489 06/08/2026" [ref=f6e153] [cursor=pointer]:
+            - /url: /booking-detail/8a9ac820-998e-40f9-999d-414dc63eb91b?jobId=503222a3-c05e-47d7-aa24-e9d9c6e84bcc
+            - generic [ref=f6e154]:
+              - generic [ref=f6e155]:
+                - generic "THIS IS DISPUTE TITLE" [ref=f6e156]
+                - generic "ADDED" [ref=f6e157]
+              - generic [ref=f6e158]: Pending
+            - generic [ref=f6e159]:
+              - generic [ref=f6e160]:
+                - generic [ref=f6e161]: USD63
+                - generic [ref=f6e162]: • SEIN260489
+              - generic [ref=f6e163]: 06/08/2026
+          - link "THIS IS DISPUTE TITLE ADDED Pending USD5,346 • SEIN260486 06/08/2026" [ref=f6e164] [cursor=pointer]:
+            - /url: /booking-detail/95d74deb-3a38-4e97-9a99-c43b22e192a8?jobId=b046f72a-be7f-4efe-810c-d2cb31f68986
+            - generic [ref=f6e165]:
+              - generic [ref=f6e166]:
+                - generic "THIS IS DISPUTE TITLE" [ref=f6e167]
+                - generic "ADDED" [ref=f6e168]
+              - generic [ref=f6e169]: Pending
+            - generic [ref=f6e170]:
+              - generic [ref=f6e171]:
+                - generic [ref=f6e172]: USD5,346
+                - generic [ref=f6e173]: • SEIN260486
+              - generic [ref=f6e174]: 06/08/2026
+    - generic [ref=f6e175]:
+      - generic [ref=f6e176]:
+        - generic [ref=f6e177]:
+          - heading "Recent Bookings" [level=3] [ref=f6e178]
+          - button [ref=f6e179] [cursor=pointer]
+        - generic [ref=f6e180]:
+          - link "IND-654684 Booking Created TESTSH COCHIN, IN → HOUSTON, TX • 2 containers" [ref=f6e181] [cursor=pointer]:
+            - /url: /booking-detail/cafa5095-3dfc-40af-988e-f4a3fac13ebc
+            - generic [ref=f6e183]:
+              - generic [ref=f6e184]:
+                - generic [ref=f6e185]: IND-654684
+                - generic [ref=f6e186]: Booking Created
+              - paragraph [ref=f6e187]: TESTSH
+              - generic [ref=f6e188]:
+                - generic [ref=f6e189]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e190]: •
+                - generic [ref=f6e191]: 2 containers
+          - link "IND-460991 Stuffing in Progress TESTSH COCHIN, IN → HOUSTON, TX • 2 containers" [ref=f6e192] [cursor=pointer]:
+            - /url: /booking-detail/51b006c3-7bd4-4d30-952a-cd6dac766db6
+            - generic [ref=f6e194]:
+              - generic [ref=f6e195]:
+                - generic [ref=f6e196]: IND-460991
+                - generic [ref=f6e197]: Stuffing in Progress
+              - paragraph [ref=f6e198]: TESTSH
+              - generic [ref=f6e199]:
+                - generic [ref=f6e200]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e201]: •
+                - generic [ref=f6e202]: 2 containers
+          - link "IND-006646 Booking Created TESTSH COCHIN, IN → HOUSTON, TX • 2 containers" [ref=f6e203] [cursor=pointer]:
+            - /url: /booking-detail/9c4c08ab-a049-4bf2-b766-863886c3de06
+            - generic [ref=f6e205]:
+              - generic [ref=f6e206]:
+                - generic [ref=f6e207]: IND-006646
+                - generic [ref=f6e208]: Booking Created
+              - paragraph [ref=f6e209]: TESTSH
+              - generic [ref=f6e210]:
+                - generic [ref=f6e211]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e212]: •
+                - generic [ref=f6e213]: 2 containers
+          - link "IND-046533 Stuffing in Progress TESTSH COCHIN, IN → HOUSTON, TX • 4 containers" [ref=f6e214] [cursor=pointer]:
+            - /url: /booking-detail/f15d0178-e815-44ed-abbb-3f0a3a82b078
+            - generic [ref=f6e216]:
+              - generic [ref=f6e217]:
+                - generic [ref=f6e218]: IND-046533
+                - generic [ref=f6e219]: Stuffing in Progress
+              - paragraph [ref=f6e220]: TESTSH
+              - generic [ref=f6e221]:
+                - generic [ref=f6e222]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e223]: •
+                - generic [ref=f6e224]: 4 containers
+          - link "NEWTEST Stuffing in Progress TESTSH COCHIN, IN → HOUSTON, TX • 40 containers" [ref=f6e225] [cursor=pointer]:
+            - /url: /booking-detail/3ae9b173-1b7e-4ca1-bdee-2afaf7f58fcf
+            - generic [ref=f6e227]:
+              - generic [ref=f6e228]:
+                - generic [ref=f6e229]: NEWTEST
+                - generic [ref=f6e230]: Stuffing in Progress
+              - paragraph [ref=f6e231]: TESTSH
+              - generic [ref=f6e232]:
+                - generic [ref=f6e233]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e234]: •
+                - generic [ref=f6e235]: 40 containers
+          - link "IND-144129 Booking Created TESTSH COCHIN, IN → HOUSTON, TX • 2 containers" [ref=f6e236] [cursor=pointer]:
+            - /url: /booking-detail/227757b8-91e2-4646-aae6-1d19e406d895
+            - generic [ref=f6e238]:
+              - generic [ref=f6e239]:
+                - generic [ref=f6e240]: IND-144129
+                - generic [ref=f6e241]: Booking Created
+              - paragraph [ref=f6e242]: TESTSH
+              - generic [ref=f6e243]:
+                - generic [ref=f6e244]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e245]: •
+                - generic [ref=f6e246]: 2 containers
+          - link "NEWWTEST Stuffing in Progress TESTSH COCHIN, IN → HOUSTON, TX • 70 containers" [ref=f6e247] [cursor=pointer]:
+            - /url: /booking-detail/0c5e4b14-c573-4b54-9602-06ed12ecc685
+            - generic [ref=f6e249]:
+              - generic [ref=f6e250]:
+                - generic [ref=f6e251]: NEWWTEST
+                - generic [ref=f6e252]: Stuffing in Progress
+              - paragraph [ref=f6e253]: TESTSH
+              - generic [ref=f6e254]:
+                - generic [ref=f6e255]: COCHIN, IN → HOUSTON, TX
+                - generic [ref=f6e256]: •
+                - generic [ref=f6e257]: 70 containers
+          - link "TEST09876 Booking Created HOUSTON, TX → NHAVA SHEVA • 2 containers" [ref=f6e258] [cursor=pointer]:
+            - /url: /booking-detail/7b5461a4-9fc1-4285-ba94-d5d4fd6c51d5
+            - generic [ref=f6e260]:
+              - generic [ref=f6e261]:
+                - generic [ref=f6e262]: TEST09876
+                - generic [ref=f6e263]: Booking Created
+              - paragraph
+              - generic [ref=f6e264]:
+                - generic [ref=f6e265]: HOUSTON, TX → NHAVA SHEVA
+                - generic [ref=f6e266]: •
+                - generic [ref=f6e267]: 2 containers
+          - link "BKG-88524-1001 Stuffing in Progress N/A ALLLOCATION → ALLLOCATIONSS • 2 containers" [ref=f6e268] [cursor=pointer]:
+            - /url: /booking-detail/6854110e-05c3-4fee-a19e-b938b093b595
+            - generic [ref=f6e270]:
+              - generic [ref=f6e271]:
+                - generic [ref=f6e272]: BKG-88524-1001
+                - generic [ref=f6e273]: Stuffing in Progress
+              - paragraph [ref=f6e274]: N/A
+              - generic [ref=f6e275]:
+                - generic [ref=f6e276]: ALLLOCATION → ALLLOCATIONSS
+                - generic [ref=f6e277]: •
+                - generic [ref=f6e278]: 2 containers
+          - link "BKG-41273-1001 Stuffing in Progress N/A GOTHENBURG → AURANGABAD, IN • 2 containers" [ref=f6e279] [cursor=pointer]:
+            - /url: /booking-detail/eb3aafde-33f7-4926-a3bb-f353202b3a02
+            - generic [ref=f6e281]:
+              - generic [ref=f6e282]:
+                - generic [ref=f6e283]: BKG-41273-1001
+                - generic [ref=f6e284]: Stuffing in Progress
+              - paragraph [ref=f6e285]: N/A
+              - generic [ref=f6e286]:
+                - generic [ref=f6e287]: GOTHENBURG → AURANGABAD, IN
+                - generic [ref=f6e288]: •
+                - generic [ref=f6e289]: 2 containers
+      - generic [ref=f6e290]:
+        - generic [ref=f6e291]:
+          - heading "Pending Actions" [level=3] [ref=f6e292]
+          - button [ref=f6e293] [cursor=pointer]
+        - generic [ref=f6e294]:
+          - 'link "📋 Create HBL Booking: NE234234 894 days overdue Assigned to: MOHAMMED JAMIL" [ref=f6e295] [cursor=pointer]':
+            - /url: /booking-detail/3c3a992e-b5f5-4fc1-aac7-058adf7fc559
+            - generic [ref=f6e297]:
+              - generic [ref=f6e298]:
+                - generic [ref=f6e299]: 📋
+                - generic [ref=f6e300]: Create HBL
+              - paragraph [ref=f6e301]: "Booking: NE234234"
+              - generic [ref=f6e302]:
+                - generic [ref=f6e303]: 894 days overdue
+                - generic [ref=f6e304]: "Assigned to: MOHAMMED JAMIL"
+          - 'link "📄 Upload MBL Booking: IND-368788 428 days overdue Assigned to: Unassigned" [ref=f6e305] [cursor=pointer]':
+            - /url: /booking-detail/9c2e6d8b-27de-4afd-9b7f-01dcd821ede1
+            - generic [ref=f6e307]:
+              - generic [ref=f6e308]:
+                - generic [ref=f6e309]: 📄
+                - generic [ref=f6e310]: Upload MBL
+              - paragraph [ref=f6e311]: "Booking: IND-368788"
+              - generic [ref=f6e312]:
+                - generic [ref=f6e313]: 428 days overdue
+                - generic [ref=f6e314]: "Assigned to: Unassigned"
+          - 'link "📋 Create HBL Booking: IND-33898891 426 days overdue Assigned to: 018ab406-dce5-4bec-af3d-fb6917051fa4" [ref=f6e315] [cursor=pointer]':
+            - /url: /booking-detail/b479eba4-932f-42d2-a84d-0d2c645da956
+            - generic [ref=f6e317]:
+              - generic [ref=f6e318]:
+                - generic [ref=f6e319]: 📋
+                - generic [ref=f6e320]: Create HBL
+              - paragraph [ref=f6e321]: "Booking: IND-33898891"
+              - generic [ref=f6e322]:
+                - generic [ref=f6e323]: 426 days overdue
+                - generic [ref=f6e324]: "Assigned to: 018ab406-dce5-4bec-af3d-fb6917051fa4"
+          - 'link "📋 Create HBL Booking: IND-724238 426 days overdue Assigned to: Unassigned" [ref=f6e325] [cursor=pointer]':
+            - /url: /booking-detail/cd5a45ed-51b2-4708-9876-11e9173da93f
+            - generic [ref=f6e327]:
+              - generic [ref=f6e328]:
+                - generic [ref=f6e329]: 📋
+                - generic [ref=f6e330]: Create HBL
+              - paragraph [ref=f6e331]: "Booking: IND-724238"
+              - generic [ref=f6e332]:
+                - generic [ref=f6e333]: 426 days overdue
+                - generic [ref=f6e334]: "Assigned to: Unassigned"
+          - 'link "📄 Upload MBL Booking: BKG74766267894646 312 days overdue Assigned to: CHANDRAVEER SINGH" [ref=f6e335] [cursor=pointer]':
+            - /url: /booking-detail/7dd11326-4b11-424b-a45f-02a085ca866d
+            - generic [ref=f6e337]:
+              - generic [ref=f6e338]:
+                - generic [ref=f6e339]: 📄
+                - generic [ref=f6e340]: Upload MBL
+              - paragraph [ref=f6e341]: "Booking: BKG74766267894646"
+              - generic [ref=f6e342]:
+                - generic [ref=f6e343]: 312 days overdue
+                - generic [ref=f6e344]: "Assigned to: CHANDRAVEER SINGH"
+          - 'link "📄 Upload MBL Booking: Dup-BKG-7879042026 201 days overdue Assigned to: RITIKA SHANESHAH" [ref=f6e345] [cursor=pointer]':
+            - /url: /booking-detail/d1932ec7-2b8f-4aa6-8e95-0058081bd2e4
+            - generic [ref=f6e347]:
+              - generic [ref=f6e348]:
+                - generic [ref=f6e349]: 📄
+                - generic [ref=f6e350]: Upload MBL
+              - paragraph [ref=f6e351]: "Booking: Dup-BKG-7879042026"
+              - generic [ref=f6e352]:
+                - generic [ref=f6e353]: 201 days overdue
+                - generic [ref=f6e354]: "Assigned to: RITIKA SHANESHAH"
+          - 'link "📋 Create HBL Booking: IND-404621 190 days overdue Assigned to: Unassigned" [ref=f6e355] [cursor=pointer]':
+            - /url: /booking-detail/db180bf4-f819-4ef1-a3a7-05d163f61b2b
+            - generic [ref=f6e357]:
+              - generic [ref=f6e358]:
+                - generic [ref=f6e359]: 📋
+                - generic [ref=f6e360]: Create HBL
+              - paragraph [ref=f6e361]: "Booking: IND-404621"
+              - generic [ref=f6e362]:
+                - generic [ref=f6e363]: 190 days overdue
+                - generic [ref=f6e364]: "Assigned to: Unassigned"
+          - 'link "📄 Upload MBL Booking: 456485 170 days overdue Assigned to: ANKIT PUROHIT" [ref=f6e365] [cursor=pointer]':
+            - /url: /booking-detail/3c05995b-67a0-45fe-b126-0349db84a2cf
+            - generic [ref=f6e367]:
+              - generic [ref=f6e368]:
+                - generic [ref=f6e369]: 📄
+                - generic [ref=f6e370]: Upload MBL
+              - paragraph [ref=f6e371]: "Booking: 456485"
+              - generic [ref=f6e372]:
+                - generic [ref=f6e373]: 170 days overdue
+                - generic [ref=f6e374]: "Assigned to: ANKIT PUROHIT"
+          - 'link "📄 Upload MBL Booking: BKG83474 166 days overdue Assigned to: Abhay Kumar" [ref=f6e375] [cursor=pointer]':
+            - /url: /booking-detail/7c764ad3-4a09-4ae1-bf9f-026f5d8d4380
+            - generic [ref=f6e377]:
+              - generic [ref=f6e378]:
+                - generic [ref=f6e379]: 📄
+                - generic [ref=f6e380]: Upload MBL
+              - paragraph [ref=f6e381]: "Booking: BKG83474"
+              - generic [ref=f6e382]:
+                - generic [ref=f6e383]: 166 days overdue
+                - generic [ref=f6e384]: "Assigned to: Abhay Kumar"
+          - 'link "📋 Create HBL Booking: Dup-SDRGGYU1234 147 days overdue Assigned to: ANKIT PUROHIT" [ref=f6e385] [cursor=pointer]':
+            - /url: /booking-detail/3665239e-024c-4e74-aae5-0879e4f44868
+            - generic [ref=f6e387]:
+              - generic [ref=f6e388]:
+                - generic [ref=f6e389]: 📋
+                - generic [ref=f6e390]: Create HBL
+              - paragraph [ref=f6e391]: "Booking: Dup-SDRGGYU1234"
+              - generic [ref=f6e392]:
+                - generic [ref=f6e393]: 147 days overdue
+                - generic [ref=f6e394]: "Assigned to: ANKIT PUROHIT"

@@ -1,0 +1,14 @@
+- generic [ref=f14e3]:
+  - navigation [ref=f14e5]:
+    - generic [ref=f14e7]:
+      - link [ref=f14e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f14e10]
+      - generic [ref=f14e11]:
+        - button "🇮🇳 India" [ref=f14e12] [cursor=pointer]:
+          - generic [ref=f14e13]: 🇮🇳
+          - generic [ref=f14e14]: India
+        - button "Notifications" [ref=f14e18] [cursor=pointer]
+        - button "A" [ref=f14e23] [cursor=pointer]
+        - button [ref=f14e25] [cursor=pointer]
+  - generic [ref=f14e27]: Loading air booking details...

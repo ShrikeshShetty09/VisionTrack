@@ -17,15 +17,25 @@ export async function GET(req: NextRequest, { params }: { params: { code: string
 
     const { code } = params;
 
+    const whereClause: any = {
+      OR: [{ issueCode: code }, { id: code }],
+    };
+
+    // Developers cannot see deleted issues or draft issues
+    if (user.role === "DEVELOPER") {
+      whereClause.deletedAt = null;
+      whereClause.publicationStatus = "PUBLISHED";
+    }
+
     const issue = await prisma.issue.findFirst({
-      where: {
-        OR: [{ issueCode: code }, { id: code }],
-        deletedAt: null,
-      },
+      where: whereClause,
       include: {
         software: true,
         module: true,
         createdBy: {
+          select: { id: true, name: true, email: true, role: true, profileImage: true },
+        },
+        deletedBy: {
           select: { id: true, name: true, email: true, role: true, profileImage: true },
         },
         assignedDeveloper: {
@@ -105,11 +115,15 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
     const body = await req.json();
     const { action } = body;
 
+    const whereClause: any = {
+      OR: [{ issueCode: code }, { id: code }],
+    };
+    if (action !== "RESTORE_ISSUE") {
+      whereClause.deletedAt = null;
+    }
+
     const issue = await prisma.issue.findFirst({
-      where: {
-        OR: [{ issueCode: code }, { id: code }],
-        deletedAt: null,
-      },
+      where: whereClause,
       include: {
         software: true,
         createdBy: true,
@@ -741,9 +755,364 @@ export async function PUT(req: NextRequest, { params }: { params: { code: string
       return NextResponse.json({ success: true, comment });
     }
 
+    // ACTION 8: SOFT DELETE ISSUE WITH MANDATORY REMARK
+    if (action === "DELETE_ISSUE") {
+      if (user.role !== "TESTER" && user.role !== "ADMIN") {
+        return NextResponse.json({ error: "Only Testers and Admins can delete issues." }, { status: 403 });
+      }
+
+      const { deleteRemark } = body;
+      if (!deleteRemark || !deleteRemark.trim()) {
+        return NextResponse.json({ error: "A remark explaining why this issue is being deleted is required." }, { status: 400 });
+      }
+
+      const updated = await prisma.issue.update({
+        where: { id: issue.id },
+        data: {
+          deletedAt: new Date(),
+          deletedById: user.id,
+          deleteRemark: deleteRemark.trim(),
+        },
+        include: {
+          software: true,
+          assignedDeveloper: true,
+          assignees: true,
+        },
+      });
+
+      await recordAuditLog({
+        userId: user.id,
+        action: "ISSUE_DELETED",
+        entityType: "Issue",
+        entityId: issue.id,
+        oldValue: { status: issue.status, publicationStatus: issue.publicationStatus },
+        newValue: { deletedAt: updated.deletedAt, deleteRemark: deleteRemark.trim() },
+        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+      });
+
+      // If assigned with developer, notify them immediately
+      const assignedDevIds = Array.from(
+        new Set([
+          issue.assignedDeveloperId,
+          ...(issue.assignees?.map((a: any) => a.id) || []),
+        ].filter(Boolean) as string[])
+      );
+
+      for (const devId of assignedDevIds) {
+        await dispatchNotification({
+          userId: devId,
+          type: "ISSUE_DELETED",
+          title: `🗑️ Issue Deleted — ${issue.issueCode}`,
+          message: `Issue ${issue.issueCode} ("${issue.title}") was deleted by ${user.name} (${user.role}). Reason: ${deleteRemark.trim()}`,
+          issueId: issue.id,
+          issueCode: issue.issueCode,
+          issueTitle: issue.title,
+          actionUrl: `/issues`,
+          emailDetails: [
+            { label: "Software", value: issue.software.name },
+            { label: "Deleted By", value: `${user.name} (${user.role})` },
+            { label: "Reason", value: deleteRemark.trim() },
+          ],
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        issue: updated,
+        message: `Issue ${issue.issueCode} deleted successfully.`,
+      });
+    }
+
+    // ACTION 9: RESTORE SOFT-DELETED ISSUE
+    if (action === "RESTORE_ISSUE") {
+      if (user.role !== "TESTER" && user.role !== "ADMIN") {
+        return NextResponse.json({ error: "Only Testers and Admins can restore deleted issues." }, { status: 403 });
+      }
+
+      const updated = await prisma.issue.update({
+        where: { id: issue.id },
+        data: {
+          deletedAt: null,
+          deletedById: null,
+          deleteRemark: null,
+        },
+      });
+
+      await recordAuditLog({
+        userId: user.id,
+        action: "ISSUE_RESTORED",
+        entityType: "Issue",
+        entityId: issue.id,
+        newValue: { deletedAt: null },
+        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+      });
+
+      return NextResponse.json({
+        success: true,
+        issue: updated,
+        message: `Issue ${issue.issueCode} restored successfully.`,
+      });
+    }
+
+    // ACTION 10: SET / TOGGLE PUBLICATION STATUS (DRAFT <-> PUBLISHED)
+    if (action === "SET_PUBLICATION_STATUS" || action === "TOGGLE_PUBLICATION_STATUS") {
+      if (user.role !== "TESTER" && user.role !== "ADMIN") {
+        return NextResponse.json({ error: "Only Testers and Admins can change publication status." }, { status: 403 });
+      }
+
+      const targetPublicationStatus: "DRAFT" | "PUBLISHED" =
+        body.publicationStatus === "DRAFT" || body.publicationStatus === "PUBLISHED"
+          ? body.publicationStatus
+          : issue.publicationStatus === "DRAFT"
+          ? "PUBLISHED"
+          : "DRAFT";
+
+      const updated = await prisma.issue.update({
+        where: { id: issue.id },
+        data: { publicationStatus: targetPublicationStatus },
+        include: {
+          software: true,
+          assignedDeveloper: true,
+          assignees: true,
+        },
+      });
+
+      await recordAuditLog({
+        userId: user.id,
+        action: "PUBLICATION_STATUS_CHANGED",
+        entityType: "Issue",
+        entityId: issue.id,
+        oldValue: { publicationStatus: issue.publicationStatus },
+        newValue: { publicationStatus: targetPublicationStatus },
+        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+      });
+
+      // If transitioned from DRAFT to PUBLISHED, send assignment notifications to assigned developers
+      if (targetPublicationStatus === "PUBLISHED" && issue.publicationStatus === "DRAFT") {
+        const assignedDevIds = Array.from(
+          new Set([
+            issue.assignedDeveloperId,
+            ...(issue.assignees?.map((a: any) => a.id) || []),
+          ].filter(Boolean) as string[])
+        );
+
+        const deadlineFormatted = issue.deadlineTimestamp
+          ? new Date(issue.deadlineTimestamp).toLocaleString("en-IN", {
+              timeZone: "Asia/Kolkata",
+              dateStyle: "medium",
+              timeStyle: "short",
+            })
+          : "No deadline specified";
+
+        for (const devId of assignedDevIds) {
+          await dispatchNotification({
+            userId: devId,
+            type: "ISSUE_ASSIGNED",
+            title: `🔔 Issue Published & Assigned — ${issue.issueCode}`,
+            message: `${issue.title} has been published and assigned to you by ${user.name}. Deadline: ${deadlineFormatted}`,
+            issueId: issue.id,
+            issueCode: issue.issueCode,
+            issueTitle: issue.title,
+            actionUrl: `/issues/${issue.issueCode}`,
+            emailDetails: [
+              { label: "Software", value: issue.software.name },
+              { label: "Priority", value: issue.priority },
+              { label: "Deadline", value: deadlineFormatted },
+              { label: "Published By", value: user.name },
+            ],
+          });
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        issue: updated,
+        message: `Issue publication status updated to ${targetPublicationStatus}.`,
+      });
+    }
+
+    // ACTION 11: EDIT ISSUE DETAILS (ADMIN & TESTER ONLY)
+    if (action === "EDIT_ISSUE") {
+      if (user.role !== "TESTER" && user.role !== "ADMIN") {
+        return NextResponse.json({ error: "Only Testers and Admins can edit issue details." }, { status: 403 });
+      }
+
+      const {
+        title,
+        description,
+        softwareId,
+        moduleId,
+        environment,
+        priority,
+        jobUrl,
+        publicationStatus,
+      } = body;
+
+      if (!title?.trim() || !description?.trim()) {
+        return NextResponse.json({ error: "Title and description are required." }, { status: 400 });
+      }
+
+      const updateData: any = {
+        title: title.trim(),
+        description: description.trim(),
+        jobUrl: jobUrl !== undefined ? (jobUrl?.trim() || null) : issue.jobUrl,
+      };
+
+      if (softwareId) updateData.softwareId = softwareId;
+      if (moduleId !== undefined) updateData.moduleId = moduleId || null;
+
+      if (environment) {
+        const envUpper = String(environment).toUpperCase().trim();
+        if (["DEV", "PRODUCTION", "LOCAL", "TESTING"].includes(envUpper)) {
+          updateData.environment = envUpper;
+        }
+      }
+
+      if (priority) {
+        const prioUpper = String(priority).toUpperCase().trim();
+        if (["CRITICAL", "HIGH", "MEDIUM", "LOW"].includes(prioUpper)) {
+          updateData.priority = prioUpper;
+        }
+      }
+
+      if (publicationStatus && ["DRAFT", "PUBLISHED"].includes(publicationStatus)) {
+        updateData.publicationStatus = publicationStatus;
+      }
+
+      const updated = await prisma.issue.update({
+        where: { id: issue.id },
+        data: updateData,
+        include: {
+          software: true,
+          module: true,
+          createdBy: true,
+          assignedDeveloper: true,
+          assignees: true,
+        },
+      });
+
+      await recordAuditLog({
+        userId: user.id,
+        action: "ISSUE_EDITED",
+        entityType: "Issue",
+        entityId: issue.id,
+        oldValue: {
+          title: issue.title,
+          description: issue.description,
+          softwareId: issue.softwareId,
+          moduleId: issue.moduleId,
+          environment: issue.environment,
+          priority: issue.priority,
+          publicationStatus: issue.publicationStatus,
+        },
+        newValue: updateData,
+        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+      });
+
+      return NextResponse.json({
+        success: true,
+        issue: updated,
+        message: "Issue details updated successfully.",
+      });
+    }
+
     return NextResponse.json({ error: "Invalid action specified." }, { status: 400 });
   } catch (error: any) {
     console.error("[Issue PUT Error]:", error);
     return NextResponse.json({ error: "Failed to update issue" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { code: string } }) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (user.role !== "TESTER" && user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Only Testers and Admins can delete issues." }, { status: 403 });
+    }
+
+    const { code } = params;
+    let deleteRemark = "";
+    try {
+      const body = await req.json();
+      deleteRemark = body.deleteRemark || "";
+    } catch {
+      deleteRemark = new URL(req.url).searchParams.get("deleteRemark") || "";
+    }
+
+    if (!deleteRemark.trim()) {
+      return NextResponse.json({ error: "A remark explaining why this issue is being deleted is required." }, { status: 400 });
+    }
+
+    const issue = await prisma.issue.findFirst({
+      where: {
+        OR: [{ issueCode: code }, { id: code }],
+        deletedAt: null,
+      },
+      include: {
+        software: true,
+        assignedDeveloper: true,
+        assignees: true,
+      },
+    });
+
+    if (!issue) {
+      return NextResponse.json({ error: "Issue not found." }, { status: 404 });
+    }
+
+    const updated = await prisma.issue.update({
+      where: { id: issue.id },
+      data: {
+        deletedAt: new Date(),
+        deletedById: user.id,
+        deleteRemark: deleteRemark.trim(),
+      },
+    });
+
+    await recordAuditLog({
+      userId: user.id,
+      action: "ISSUE_DELETED",
+      entityType: "Issue",
+      entityId: issue.id,
+      newValue: { deletedAt: updated.deletedAt, deleteRemark: deleteRemark.trim() },
+      ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+    });
+
+    // Notify assigned developers
+    const assignedDevIds = Array.from(
+      new Set([
+        issue.assignedDeveloperId,
+        ...(issue.assignees?.map((a: any) => a.id) || []),
+      ].filter(Boolean) as string[])
+    );
+
+    for (const devId of assignedDevIds) {
+      await dispatchNotification({
+        userId: devId,
+        type: "ISSUE_DELETED",
+        title: `🗑️ Issue Deleted — ${issue.issueCode}`,
+        message: `Issue ${issue.issueCode} ("${issue.title}") has been deleted by ${user.name} (${user.role}). Reason: ${deleteRemark.trim()}`,
+        issueId: issue.id,
+        issueCode: issue.issueCode,
+        issueTitle: issue.title,
+        actionUrl: `/issues`,
+        emailDetails: [
+          { label: "Software", value: issue.software.name },
+          { label: "Deleted By", value: `${user.name} (${user.role})` },
+          { label: "Reason", value: deleteRemark.trim() },
+        ],
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      issue: updated,
+      message: `Issue ${issue.issueCode} deleted successfully.`,
+    });
+  } catch (error: any) {
+    console.error("[Issue DELETE Error]:", error);
+    return NextResponse.json({ error: "Failed to delete issue" }, { status: 500 });
   }
 }

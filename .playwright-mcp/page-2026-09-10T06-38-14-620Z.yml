@@ -1,0 +1,86 @@
+- generic [ref=f3e3]:
+  - navigation [ref=f3e5]:
+    - generic [ref=f3e7]:
+      - link [ref=f3e9] [cursor=pointer]:
+        - /url: /
+        - img "Vision Data Labs" [ref=f3e10]
+      - generic [ref=f3e11]:
+        - button "🇺🇸 United States" [ref=f3e12] [cursor=pointer]:
+          - generic [ref=f3e13]: 🇺🇸
+          - generic [ref=f3e14]: United States
+        - button "Notifications" [ref=f3e18] [cursor=pointer]
+        - button "A" [ref=f3e23] [cursor=pointer]
+        - button [ref=f3e25] [cursor=pointer]
+  - generic [ref=f3e27]:
+    - generic [ref=f3e30]:
+      - generic [ref=f3e31]:
+        - button [ref=f3e32] [cursor=pointer]
+        - generic [ref=f3e41]:
+          - 'heading "Job Number: SIIN260171" [level=1] [ref=f3e42]'
+          - button "Click to Update Job No" [ref=f3e43] [cursor=pointer]
+          - generic [ref=f3e44]: "Booking No: BKG-TEST5"
+      - generic [ref=f3e49]:
+        - link [ref=f3e50] [cursor=pointer]:
+          - /url: /import/transactions/sale-bill?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32&bookingId=7e4dd17e-8ed4-4654-9498-a085630983e7
+          - button "Create Sale Bill" [ref=f3e51]
+        - link [ref=f3e52] [cursor=pointer]:
+          - /url: /import/transactions/purchase-bill?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32&bookingId=7e4dd17e-8ed4-4654-9498-a085630983e7
+          - button "Create Purchase Bill" [ref=f3e53]
+        - link [ref=f3e54] [cursor=pointer]:
+          - /url: /import/old-inv-cn/7e4dd17e-8ed4-4654-9498-a085630983e7?arrivalId=4630253a-af62-4b52-81f7-4cef9dd32b32
+          - button "Old Inv CN" [ref=f3e55]
+        - button "Old Debit Note" [ref=f3e56] [cursor=pointer]
+        - button "Job Close" [ref=f3e57] [cursor=pointer]
+    - navigation [ref=f3e60]:
+      - generic [ref=f3e61]:
+        - button "Sale Bill" [ref=f3e62] [cursor=pointer]
+        - button "Purchase Bill" [ref=f3e67] [cursor=pointer]
+        - button "Documents" [ref=f3e72] [cursor=pointer]
+        - button "Old Credit Note" [ref=f3e77] [cursor=pointer]
+        - button "Old Debit Note" [ref=f3e82] [cursor=pointer]
+      - generic [ref=f3e87]:
+        - generic [ref=f3e93]:
+          - generic [ref=f3e94]: Total Sale
+          - generic [ref=f3e95]: $0.00
+          - generic [ref=f3e96]: "With VAT: $0.00"
+        - generic [ref=f3e103]:
+          - generic [ref=f3e104]: Total Purchase
+          - generic [ref=f3e105]: $0.00
+          - generic [ref=f3e106]: "With VAT: $0.00"
+        - generic [ref=f3e111]:
+          - generic [ref=f3e112]: Profit (0.0%)
+          - generic [ref=f3e113]:
+            - generic [ref=f3e114]: $0.00
+            - generic [ref=f3e115]: "Incl VAT: $0.00"
+            - generic [ref=f3e116]: "Excl VAT: $0.00"
+    - generic [ref=f3e122]:
+      - table [ref=f3e125]:
+        - rowgroup [ref=f3e126]:
+          - row [ref=f3e127]:
+            - columnheader "Bill No" [ref=f3e128]
+            - columnheader "Bill Date" [ref=f3e129]
+            - columnheader "Party Details" [ref=f3e130]
+            - columnheader "Job Info" [ref=f3e131]
+            - columnheader "Items" [ref=f3e132]
+            - columnheader "Credit Notes" [ref=f3e133]
+            - columnheader "Total Amount" [ref=f3e134]
+            - columnheader "Adjustment" [ref=f3e135]
+            - columnheader "VAT Amount" [ref=f3e136]
+            - columnheader "Grand Total" [ref=f3e137]
+            - columnheader "UPdated By" [ref=f3e138]
+            - columnheader "Status" [ref=f3e139]
+            - columnheader "Payment Status" [ref=f3e140]
+            - columnheader [ref=f3e141]
+        - rowgroup [ref=f3e143]:
+          - row [ref=f3e144]:
+            - cell [ref=f3e145]:
+              - generic [ref=f3e146]:
+                - paragraph [ref=f3e147]: No sale bills found
+                - paragraph [ref=f3e148]: No sale bills have been created for this booking yet.
+      - generic [ref=f3e150]:
+        - generic [ref=f3e151]: Showing 1 to 0 of 0 entries
+        - generic [ref=f3e152]:
+          - button "Previous" [disabled] [ref=f3e153]
+          - button "1" [ref=f3e154] [cursor=pointer]
+          - button "Next" [disabled] [ref=f3e155]
+    - button [ref=f3e157] [cursor=pointer]

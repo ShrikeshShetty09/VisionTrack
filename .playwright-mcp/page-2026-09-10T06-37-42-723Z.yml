@@ -1,0 +1,44 @@
+- generic [ref=e4]:
+  - generic [ref=e6]:
+    - img "Crest Container Lines" [ref=e15]
+    - heading "Login" [level=2] [ref=e8]
+    - generic [ref=e9]:
+      - textbox "Enter username" [ref=e11]: ADMIN
+      - textbox "password" [ref=e13]: "968997"
+      - button "Login" [ref=e14] [cursor=pointer]
+  - generic [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Select Country" [level=2] [ref=e20]
+        - paragraph [ref=e21]: Choose your working country to continue
+      - button [ref=e22] [cursor=pointer]
+    - generic [ref=e26]:
+      - button "🇮🇳 India ₹ INR • Indian rupee →" [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]:
+          - generic [ref=e29]: 🇮🇳
+          - generic [ref=e30]:
+            - generic [ref=e31]: India
+            - generic [ref=e32]: ₹ INR • Indian rupee
+          - generic [ref=e33]: →
+      - button "🇱🇰 Sri Lanka Rs LKR • Sri Lankan rupee →" [ref=e34] [cursor=pointer]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: 🇱🇰
+          - generic [ref=e37]:
+            - generic [ref=e38]: Sri Lanka
+            - generic [ref=e39]: Rs LKR • Sri Lankan rupee
+          - generic [ref=e40]: →
+      - button "🇺🇸 United States $ USD • United States dollar →" [ref=e41] [cursor=pointer]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: 🇺🇸
+          - generic [ref=e44]:
+            - generic [ref=e45]: United States
+            - generic [ref=e46]: $ USD • United States dollar
+          - generic [ref=e47]: →
+      - button "🏳️ Chennai • →" [ref=e48] [cursor=pointer]:
+        - generic [ref=e49]:
+          - generic [ref=e50]: 🏳️
+          - generic [ref=e51]:
+            - generic [ref=e52]: Chennai
+            - generic [ref=e53]: •
+          - generic [ref=e54]: →
+    - paragraph [ref=e56]: You can change this selection anytime from your profile

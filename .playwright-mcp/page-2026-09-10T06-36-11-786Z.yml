@@ -1,0 +1,8 @@
+- generic [ref=e6]:
+  - generic [ref=e7]:
+    - img "Crest Container Lines"
+  - heading "Login" [level=2] [ref=e8]
+  - generic [ref=e9]:
+    - textbox "Enter username" [ref=e11]
+    - textbox "password" [ref=e13]
+    - button "Login" [ref=e14] [cursor=pointer]
